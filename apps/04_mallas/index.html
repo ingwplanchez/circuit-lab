@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Corrientes de Malla - Análisis Matricial LVK</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .math-font { font-family: 'Cambria Math', 'Times New Roman', serif; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 flex flex-col justify-between">
+
+    <header class="max-w-6xl mx-auto w-full mb-6 text-center md:text-left border-b border-slate-800 pb-4">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-sky-400">Método de Corrientes de Malla (2 Mallas)</h1>
+                <p class="text-slate-400 text-sm mt-1">Resolución de Sistemas de Ecuaciones mediante Análisis Matricial y Regla de Cramer</p>
+            </div>
+            <div class="bg-slate-800/80 border border-slate-700/80 px-4 py-2 rounded-xl text-xs md:text-sm text-slate-300 flex items-center gap-2">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Matriz de Impedancias: <strong class="text-sky-300 font-mono">[R] · [I] = [V]</strong></span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+
+        <!-- Left Column: Controls and Circuit Parameters -->
+        <section class="lg:col-span-5 bg-slate-800/80 p-6 rounded-2xl border border-slate-700/60 shadow-xl flex flex-col justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                    Parámetros del Circuito
+                </h2>
+
+                <div class="space-y-5">
+                    <!-- Vs Source Slider -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="vs-slider" class="text-sm font-medium text-slate-300">
+                                Fuente de Tensión <span class="text-amber-400 font-bold">(Vₛ)</span>
+                            </label>
+                            <span id="vs-val" class="font-mono text-sm bg-slate-900 px-2.5 py-0.5 rounded text-amber-400 font-bold">12.0 V</span>
+                        </div>
+                        <input type="range" id="vs-slider" min="5" max="20" step="0.5" value="12" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-400">
+                        <div class="flex justify-between text-xs text-slate-500 mt-0.5">
+                            <span>5.0 V</span>
+                            <span>20.0 V</span>
+                        </div>
+                    </div>
+
+                    <!-- R1 Resistor Slider -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="r1-slider" class="text-sm font-medium text-slate-300">
+                                Resistencia Malla 1 <span class="text-sky-400 font-bold">(R₁)</span>
+                            </label>
+                            <span id="r1-val" class="font-mono text-sm bg-slate-900 px-2.5 py-0.5 rounded text-sky-400 font-bold">2.0 kΩ</span>
+                        </div>
+                        <input type="range" id="r1-slider" min="500" max="10000" step="100" value="2000" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-400">
+                        <div class="flex justify-between text-xs text-slate-500 mt-0.5">
+                            <span>0.5 kΩ</span>
+                            <span>10.0 kΩ</span>
+                        </div>
+                    </div>
+
+                    <!-- R2 Central Shared Resistor Slider -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="r2-slider" class="text-sm font-medium text-slate-300">
+                                Resistencia Compartida <span class="text-purple-400 font-bold">(R₂)</span>
+                            </label>
+                            <span id="r2-val" class="font-mono text-sm bg-slate-900 px-2.5 py-0.5 rounded text-purple-400 font-bold">4.0 kΩ</span>
+                        </div>
+                        <input type="range" id="r2-slider" min="500" max="10000" step="100" value="4000" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-400">
+                        <div class="flex justify-between text-xs text-slate-500 mt-0.5">
+                            <span>0.5 kΩ</span>
+                            <span>10.0 kΩ</span>
+                        </div>
+                    </div>
+
+                    <!-- R3 Resistor Slider -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="r3-slider" class="text-sm font-medium text-slate-300">
+                                Resistencia Malla 2 <span class="text-indigo-400 font-bold">(R₃)</span>
+                            </label>
+                            <span id="r3-val" class="font-mono text-sm bg-slate-900 px-2.5 py-0.5 rounded text-indigo-400 font-bold">2.0 kΩ</span>
+                        </div>
+                        <input type="range" id="r3-slider" min="500" max="10000" step="100" value="2000" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-400">
+                        <div class="flex justify-between text-xs text-slate-500 mt-0.5">
+                            <span>0.5 kΩ</span>
+                            <span>10.0 kΩ</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Results Summary Widget -->
+            <div class="mt-6 pt-4 border-t border-slate-700 grid grid-cols-3 gap-2 text-center">
+                <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/50">
+                    <span class="text-[11px] text-slate-400 block mb-0.5">Malla 1 (I₁)</span>
+                    <span id="i1-summary" class="text-sm md:text-base font-bold font-mono text-sky-400">3.00 mA</span>
+                </div>
+                <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/50">
+                    <span class="text-[11px] text-slate-400 block mb-0.5">Malla 2 (I₂)</span>
+                    <span id="i2-summary" class="text-sm md:text-base font-bold font-mono text-indigo-400">2.00 mA</span>
+                </div>
+                <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/50">
+                    <span class="text-[11px] text-slate-400 block mb-0.5">Neto R₂ (I_R2)</span>
+                    <span id="ir2-summary" class="text-sm md:text-base font-bold font-mono text-purple-400">1.00 mA</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Column: Visual Diagram & Step-by-Step Matrix Resolution -->
+        <section class="lg:col-span-7 flex flex-col gap-6">
+
+            <!-- SVG Circuit Schematic Container -->
+            <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-700/60 shadow-xl flex flex-col items-center">
+                <div class="w-full flex justify-between items-center mb-3">
+                    <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Esquema del Circuito de 2 Mallas
+                    </h2>
+                    <span class="text-xs bg-slate-900 px-3 py-1 rounded-full text-slate-400 font-mono border border-slate-700">Mallas Horarias</span>
+                </div>
+
+                <!-- Interactive Animated Circuit Graphic -->
+                <div class="relative w-full bg-slate-900/90 rounded-xl p-4 border border-slate-700/50 flex justify-center items-center overflow-hidden">
+                    <svg id="circuit-svg" viewBox="0 0 540 260" class="w-full max-w-xl h-auto font-mono text-xs select-none">
+                        <defs>
+                            <marker id="arrow-loop" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8"/>
+                            </marker>
+                            <marker id="arrow-loop-2" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#818cf8"/>
+                            </marker>
+                            <marker id="arrow-ir2" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#c084fc"/>
+                            </marker>
+                        </defs>
+
+                        <!-- Outer Wires -->
+                        <!-- Mesh 1 Wire Left-Top-Bottom -->
+                        <path d="M 50 130 L 50 40 L 270 40" stroke="#64748b" stroke-width="3" fill="none"/>
+                        <path d="M 50 130 L 50 220 L 270 220" stroke="#64748b" stroke-width="3" fill="none"/>
+
+                        <!-- Mesh 2 Wire Right-Top-Bottom -->
+                        <path d="M 270 40 L 490 40 L 490 220 L 270 220" stroke="#64748b" stroke-width="3" fill="none"/>
+
+                        <!-- Central Shared Branch Wire -->
+                        <path d="M 270 40 L 270 220" stroke="#64748b" stroke-width="3" fill="none"/>
+
+                        <!-- Voltage Source Vs (Left Branch) -->
+                        <g transform="translate(50, 130)">
+                            <circle cx="0" cy="0" r="20" fill="#1e293b" stroke="#fbbf24" stroke-width="2.5"/>
+                            <text x="0" y="-4" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="13">+</text>
+                            <text x="0" y="14" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="13">-</text>
+                            <text x="-28" y="4" text-anchor="end" fill="#fbbf24" font-weight="bold" font-size="11">Vₛ</text>
+                        </g>
+
+                        <!-- Resistor R1 (Mesh 1 Top) -->
+                        <g transform="translate(160, 40)">
+                            <rect x="-35" y="-12" width="70" height="24" rx="4" fill="#0284c7" stroke="#38bdf8" stroke-width="2"/>
+                            <text x="0" y="4" text-anchor="middle" fill="#ffffff" font-weight="bold" font-size="11">R₁</text>
+                            <text x="0" y="-18" id="svg-r1-val" text-anchor="middle" fill="#38bdf8" font-size="11">2.0 kΩ</text>
+                        </g>
+
+                        <!-- Shared Resistor R2 (Central Branch) -->
+                        <g transform="translate(270, 130)">
+                            <rect x="-12" y="-35" width="24" height="70" rx="4" fill="#6b21a8" stroke="#c084fc" stroke-width="2"/>
+                            <text x="0" y="4" text-anchor="middle" fill="#ffffff" font-weight="bold" font-size="11">R₂</text>
+                            <text x="22" y="4" id="svg-r2-val" text-anchor="start" fill="#c084fc" font-size="11">4.0 kΩ</text>
+                        </g>
+
+                        <!-- Resistor R3 (Mesh 2 Top) -->
+                        <g transform="translate(380, 40)">
+                            <rect x="-35" y="-12" width="70" height="24" rx="4" fill="#3730a3" stroke="#818cf8" stroke-width="2"/>
+                            <text x="0" y="4" text-anchor="middle" fill="#ffffff" font-weight="bold" font-size="11">R₃</text>
+                            <text x="0" y="-18" id="svg-r3-val" text-anchor="middle" fill="#818cf8" font-size="11">2.0 kΩ</text>
+                        </g>
+
+                        <!-- Mesh 1 Clockwise Direction Arc -->
+                        <path d="M 130 110 A 28 28 0 1 1 180 145" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="3 3" marker-end="url(#arrow-loop)"/>
+                        <text x="155" y="130" text-anchor="middle" fill="#38bdf8" font-weight="bold" font-size="11">I₁</text>
+
+                        <!-- Mesh 2 Clockwise Direction Arc -->
+                        <path d="M 350 110 A 28 28 0 1 1 400 145" fill="none" stroke="#818cf8" stroke-width="2" stroke-dasharray="3 3" marker-end="url(#arrow-loop-2)"/>
+                        <text x="375" y="130" text-anchor="middle" fill="#818cf8" font-weight="bold" font-size="11">I₂</text>
+
+                        <!-- Dynamic Central Branch Net Current Vector (I_R2) -->
+                        <g id="ir2-vector" transform="translate(230, 130)">
+                            <line id="ir2-arrow-line" x1="0" y1="-30" x2="0" y2="30" stroke="#c084fc" stroke-width="2.5" marker-end="url(#arrow-ir2)"/>
+                            <text id="ir2-text" x="-10" y="4" text-anchor="end" fill="#c084fc" font-weight="bold" font-size="10">I_R₂</text>
+                        </g>
+                    </svg>
+
+                    <!-- Particle Canvas for Flow Overlay -->
+                    <canvas id="particle-canvas" width="540" height="260" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
+                </div>
+            </div>
+
+            <!-- Step-by-Step Matrix Solution Display -->
+            <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-700/60 shadow-xl flex-grow space-y-6">
+                <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M12 7h.01M15 7h.01"></path></svg>
+                    Paso a Paso: Resolución por Regla de Cramer
+                </h2>
+
+                <!-- Matrix Form Equation -->
+                <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-700/70 overflow-x-auto">
+                    <div class="text-xs text-slate-400 mb-2">1. Planteamiento Matricial ([R] · [I] = [V]):</div>
+                    <div class="flex items-center justify-center gap-2 font-mono text-sm md:text-base">
+                        <span class="text-xl md:text-2xl text-slate-500">[</span>
+                        <div class="grid grid-cols-2 gap-x-4 text-center">
+                            <span id="m-r11" class="text-sky-400 font-bold">R₁₁</span>
+                            <span id="m-r12" class="text-rose-400 font-bold">-R₁₂</span>
+                            <span id="m-r21" class="text-rose-400 font-bold">-R₂₁</span>
+                            <span id="m-r22" class="text-indigo-400 font-bold">R₂₂</span>
+                        </div>
+                        <span class="text-xl md:text-2xl text-slate-500">]</span>
+
+                        <span class="text-xl md:text-2xl text-slate-500">[</span>
+                        <div class="flex flex-col text-center">
+                            <span class="text-sky-300 font-bold">I₁</span>
+                            <span class="text-indigo-300 font-bold">I₂</span>
+                        </div>
+                        <span class="text-xl md:text-2xl text-slate-500">]</span>
+
+                        <span>=</span>
+
+                        <span class="text-xl md:text-2xl text-slate-500">[</span>
+                        <div class="flex flex-col text-center">
+                            <span id="m-vs1" class="text-amber-400 font-bold">Vₛ</span>
+                            <span id="m-vs2" class="text-amber-400 font-bold">0</span>
+                        </div>
+                        <span class="text-xl md:text-2xl text-slate-500">]</span>
+                    </div>
+                </div>
+
+                <!-- Determinants Calculation Steps -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs md:text-sm">
+                    <!-- Delta Main -->
+                    <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700/60">
+                        <div class="text-slate-400 text-[11px] mb-1 font-sans">Determinante Principal (Δ)</div>
+                        <div id="calc-delta" class="text-slate-200">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Delta 1 -->
+                    <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700/60">
+                        <div class="text-slate-400 text-[11px] mb-1 font-sans">Determinante I₁ (Δ₁)</div>
+                        <div id="calc-delta1" class="text-slate-200">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Delta 2 -->
+                    <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700/60">
+                        <div class="text-slate-400 text-[11px] mb-1 font-sans">Determinante I₂ (Δ₂)</div>
+                        <div id="calc-delta2" class="text-slate-200">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Final Currents Division -->
+                <div class="p-4 rounded-xl border bg-emerald-950/30 border-emerald-500/40 flex flex-col md:flex-row justify-between items-center gap-4 text-xs md:text-sm">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span class="text-slate-200">Resultados Finales:</span>
+                    </div>
+                    <div class="flex flex-wrap gap-4 font-mono text-sm">
+                        <span>I₁ = Δ₁ / Δ = <strong id="res-i1" class="text-sky-400">3.00 mA</strong></span>
+                        <span>I₂ = Δ₂ / Δ = <strong id="res-i2" class="text-indigo-400">2.00 mA</strong></span>
+                        <span>I_R₂ = |I₁ - I₂| = <strong id="res-ir2" class="text-purple-400">1.00 mA</strong></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="max-w-6xl mx-auto w-full mt-6 pt-4 border-t border-slate-800 text-center text-xs text-slate-500">
+        Simulador Interactivo de Electrónica | Análisis Matricial de Mallas mediante LVK
+    </footer>
+
+    <script>
+        // DOM Controls Elements
+        const vsSlider = document.getElementById('vs-slider');
+        const r1Slider = document.getElementById('r1-slider');
+        const r2Slider = document.getElementById('r2-slider');
+        const r3Slider = document.getElementById('r3-slider');
+
+        const vsVal = document.getElementById('vs-val');
+        const r1Val = document.getElementById('r1-val');
+        const r2Val = document.getElementById('r2-val');
+        const r3Val = document.getElementById('r3-val');
+
+        // Summary Text Displays
+        const i1Summary = document.getElementById('i1-summary');
+        const i2Summary = document.getElementById('i2-summary');
+        const ir2Summary = document.getElementById('ir2-summary');
+
+        // SVG Values
+        const svgR1Val = document.getElementById('svg-r1-val');
+        const svgR2Val = document.getElementById('svg-r2-val');
+        const svgR3Val = document.getElementById('svg-r3-val');
+        const ir2Vector = document.getElementById('ir2-vector');
+        const ir2ArrowLine = document.getElementById('ir2-arrow-line');
+        const ir2Text = document.getElementById('ir2-text');
+
+        // Matrix Form DOM Elements
+        const mR11 = document.getElementById('m-r11');
+        const mR12 = document.getElementById('m-r12');
+        const mR21 = document.getElementById('m-r21');
+        const mR22 = document.getElementById('m-r22');
+        const mVs1 = document.getElementById('m-vs1');
+
+        // Step-by-step Calculation Containers
+        const calcDelta = document.getElementById('calc-delta');
+        const calcDelta1 = document.getElementById('calc-delta1');
+        const calcDelta2 = document.getElementById('calc-delta2');
+
+        const resI1 = document.getElementById('res-i1');
+        const resI2 = document.getElementById('res-i2');
+        const resIR2 = document.getElementById('res-ir2');
+
+        // Canvas Setup for Particles
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Circuit Geometry Coordinates for Particles Flow
+        const paths = {
+            m1: [
+                {x: 50, y: 130}, {x: 50, y: 40}, {x: 270, y: 40}, 
+                {x: 270, y: 220}, {x: 50, y: 220}, {x: 50, y: 130}
+            ],
+            m2: [
+                {x: 270, y: 40}, {x: 490, y: 40}, {x: 490, y: 220}, 
+                {x: 270, y: 220}, {x: 270, y: 40}
+            ],
+            centralDown: [{x: 270, y: 40}, {x: 270, y: 220}],
+            centralUp: [{x: 270, y: 220}, {x: 270, y: 40}]
+        };
+
+        let particlesM1 = [];
+        let particlesM2 = [];
+        let currentI1 = 0;
+        let currentI2 = 0;
+
+        // Particle Engine Class
+        class ElectronParticle {
+            constructor(path, speed, color) {
+                this.path = path;
+                this.speed = speed;
+                this.color = color;
+                this.segment = 0;
+                this.progress = 0;
+            }
+
+            update() {
+                this.progress += this.speed;
+                if (this.progress >= 1) {
+                    this.progress = 0;
+                    this.segment++;
+                    if (this.segment >= this.path.length - 1) {
+                        this.segment = 0;
+                    }
+                }
+            }
+
+            draw(context) {
+                const p1 = this.path[this.segment];
+                const p2 = this.path[this.segment + 1];
+                if (!p1 || !p2) return;
+
+                const x = p1.x + (p2.x - p1.x) * this.progress;
+                const y = p1.y + (p2.y - p1.y) * this.progress;
+
+                context.beginPath();
+                context.arc(x, y, 3, 0, Math.PI * 2);
+                context.fillStyle = this.color;
+                context.shadowColor = this.color;
+                context.shadowBlur = 5;
+                context.fill();
+                context.shadowBlur = 0;
+            }
+        }
+
+        // Main Calculation Engine
+        function updateSimulation() {
+            const vs = parseFloat(vsSlider.value); // Volts
+            const r1 = parseFloat(r1Slider.value); // Ohms
+            const r2 = parseFloat(r2Slider.value); // Ohms
+            const r3 = parseFloat(r3Slider.value); // Ohms
+
+            // Matrix Coefficients
+            // R11 = R1 + R2 (total resistance in loop 1)
+            const r11 = r1 + r2; 
+            // R12 = R21 = R2 (shared resistance)
+            const r12 = r2; 
+            const r21 = r2; 
+            // R22 = R2 + R3 (total resistance in loop 2)
+            const r22 = r2 + r3; 
+
+            // Convert Ohms to kOhms for displaying readable matrix values
+            const k11 = r11 / 1000;
+            const k12 = r12 / 1000;
+            const k21 = r21 / 1000;
+            const k22 = r22 / 1000;
+
+            // Determinants Calculations (using kOhms yields current directly in mA)
+            // Delta = (R11 * R22) - (-R12 * -R21)
+            const delta = (k11 * k22) - (k12 * k21);
+
+            // Delta 1 = (Vs * R22) - (-R12 * 0)
+            const delta1 = (vs * k22) - (k12 * 0);
+
+            // Delta 2 = (R11 * 0) - (Vs * -R21) -> Cramer formula subtraction: 0 - (vs * -k21) = vs * k21
+            const delta2 = (k11 * 0) - (vs * (-k21));
+
+            // Mesh Currents (in mA)
+            const i1 = delta1 / delta;
+            const i2 = delta2 / delta;
+
+            // Central Resistor R2 Net Current (mA)
+            const iR2 = i1 - i2;
+            const absIR2 = Math.abs(iR2);
+
+            currentI1 = i1;
+            currentI2 = i2;
+
+            // Update Input Labels
+            vsVal.textContent = `${vs.toFixed(1)} V`;
+            r1Val.textContent = `${(r1 / 1000).toFixed(1)} kΩ`;
+            r2Val.textContent = `${(r2 / 1000).toFixed(1)} kΩ`;
+            r3Val.textContent = `${(r3 / 1000).toFixed(1)} kΩ`;
+
+            // Update Summary Widget
+            i1Summary.textContent = `${i1.toFixed(2)} mA`;
+            i2Summary.textContent = `${i2.toFixed(2)} mA`;
+            ir2Summary.textContent = `${absIR2.toFixed(2)} mA`;
+
+            // Update SVG Text labels
+            svgR1Val.textContent = `${(r1 / 1000).toFixed(1)} kΩ`;
+            svgR2Val.textContent = `${(r2 / 1000).toFixed(1)} kΩ`;
+            svgR3Val.textContent = `${(r3 / 1000).toFixed(1)} kΩ`;
+
+            // Update Vector Arrow on SVG for R2 Branch
+            if (iR2 >= 0) {
+                // Direction Downward
+                ir2ArrowLine.setAttribute('y1', '-30');
+                ir2ArrowLine.setAttribute('y2', '30');
+                ir2Text.textContent = `↓ ${absIR2.toFixed(2)} mA`;
+            } else {
+                // Direction Upward
+                ir2ArrowLine.setAttribute('y1', '30');
+                ir2ArrowLine.setAttribute('y2', '-30');
+                ir2Text.textContent = `↑ ${absIR2.toFixed(2)} mA`;
+            }
+
+            // Update Matrix Layout Display
+            mR11.textContent = `${k11.toFixed(1)}`;
+            mR12.textContent = `-${k12.toFixed(1)}`;
+            mR21.textContent = `-${k21.toFixed(1)}`;
+            mR22.textContent = `${k22.toFixed(1)}`;
+            mVs1.textContent = `${vs.toFixed(1)}`;
+
+            // Step-by-Step Cramer HTML Breakdown
+            calcDelta.innerHTML = `
+                <div>Δ = (${k11.toFixed(1)} · ${k22.toFixed(1)}) - (-${k12.toFixed(1)} · -${k21.toFixed(1)})</div>
+                <div class="mt-1">Δ = ${(k11 * k22).toFixed(2)} - ${(k12 * k21).toFixed(2)}</div>
+                <div class="text-emerald-400 font-bold mt-1">Δ = ${delta.toFixed(2)}</div>
+            `;
+
+            calcDelta1.innerHTML = `
+                <div>Δ₁ = (${vs.toFixed(1)} · ${k22.toFixed(1)}) - (-${k12.toFixed(1)} · 0)</div>
+                <div class="mt-1">Δ₁ = ${(vs * k22).toFixed(2)} - 0</div>
+                <div class="text-sky-400 font-bold mt-1">Δ₁ = ${delta1.toFixed(2)}</div>
+            `;
+
+            calcDelta2.innerHTML = `
+                <div>Δ₂ = (${k11.toFixed(1)} · 0) - (${vs.toFixed(1)} · -${k21.toFixed(1)})</div>
+                <div class="mt-1">Δ₂ = 0 - (-${(vs * k21).toFixed(2)})</div>
+                <div class="text-indigo-400 font-bold mt-1">Δ₂ = ${delta2.toFixed(2)}</div>
+            `;
+
+            resI1.textContent = `${i1.toFixed(2)} mA`;
+            resI2.textContent = `${i2.toFixed(2)} mA`;
+            resIR2.textContent = `${absIR2.toFixed(2)} mA`;
+        }
+
+        // Particle Animation Loop
+        function initParticles() {
+            particlesM1 = [];
+            particlesM2 = [];
+
+            // Spawn particles for Mesh 1 Loop
+            for (let i = 0; i < 12; i++) {
+                const p = new ElectronParticle(paths.m1, 0.01, '#38bdf8');
+                p.progress = i / 12;
+                particlesM1.push(p);
+            }
+
+            // Spawn particles for Mesh 2 Loop
+            for (let i = 0; i < 12; i++) {
+                const p = new ElectronParticle(paths.m2, 0.01, '#818cf8');
+                p.progress = i / 12;
+                particlesM2.push(p);
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update particle speeds proportionally to calculated currents
+            const speedScale = 0.003;
+
+            particlesM1.forEach(p => {
+                p.speed = Math.max(0.002, currentI1 * speedScale);
+                p.update();
+                p.draw(ctx);
+            });
+
+            particlesM2.forEach(p => {
+                p.speed = Math.max(0.002, currentI2 * speedScale);
+                p.update();
+                p.draw(ctx);
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Event Listeners
+        vsSlider.addEventListener('input', updateSimulation);
+        r1Slider.addEventListener('input', updateSimulation);
+        r2Slider.addEventListener('input', updateSimulation);
+        r3Slider.addEventListener('input', updateSimulation);
+
+        // Initial setup on window load
+        window.onload = function() {
+            updateSimulation();
+            initParticles();
+            animate();
+        };
+    </script>
+</body>
+</html>

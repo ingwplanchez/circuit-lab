@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transferencia Máxima de Potencia — Día 3 Lección 3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.07);
+        }
+        input[type=range] { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; outline: none; cursor: pointer; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; cursor: pointer; }
+        .badge-optimal { animation: pulse-gold 1.2s ease-in-out infinite; }
+        @keyframes pulse-gold {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(250,204,21,0.5); }
+            50% { box-shadow: 0 0 0 8px rgba(250,204,21,0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-3 sm:p-6 flex flex-col gap-5 selection:bg-indigo-500 selection:text-white">
+
+    <!-- Header -->
+    <header class="max-w-7xl mx-auto w-full glass-panel rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-500 to-fuchsia-600 flex items-center justify-center text-white shadow-lg shadow-violet-500/25">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[11px] font-mono uppercase tracking-wider text-violet-400 font-bold bg-violet-950/60 px-2 py-0.5 rounded border border-violet-800/40">Día 3 • Lección 3</span>
+                    <span class="text-xs text-slate-400">Circuitos Eléctricos I & II</span>
+                </div>
+                <h1 class="text-lg sm:text-2xl font-bold text-white leading-tight">Transferencia Máxima de Potencia</h1>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <div id="header-badge" class="bg-slate-900 border border-yellow-500/40 px-3 py-1.5 rounded-xl flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse"></span>
+                <span id="header-status" class="text-xs font-semibold text-yellow-300 mono">R_L = R_TH ★</span>
+            </div>
+            <a href="../../index.html" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 border border-slate-700 transition-colors">← Portal</a>
+        </div>
+    </header>
+
+    <!-- Main Grid -->
+    <main class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 flex-grow">
+
+        <!-- Left: Controls + Presets -->
+        <section class="lg:col-span-4 space-y-4">
+
+            <!-- Presets -->
+            <div class="glass-panel p-4 rounded-2xl">
+                <h2 class="text-xs font-bold text-violet-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+                    Presets Rápidos (Audio)
+                </h2>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="loadPreset(12,8,8)" class="text-xs px-3 py-2 rounded-lg bg-violet-900/50 hover:bg-violet-800/60 border border-violet-700/40 text-violet-200 font-medium transition-colors">🔊 Amp 8Ω ↔ 8Ω</button>
+                    <button onclick="loadPreset(12,8,4)" class="text-xs px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-medium transition-colors">Sub-carga 4Ω</button>
+                    <button onclick="loadPreset(12,8,16)" class="text-xs px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-medium transition-colors">Sobre-carga 16Ω</button>
+                    <button onclick="loadPreset(50,50,50)" class="text-xs px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-medium transition-colors">📡 RF 50Ω↔50Ω</button>
+                </div>
+            </div>
+
+            <!-- Sliders -->
+            <div class="glass-panel p-5 rounded-2xl space-y-5">
+                <h2 class="text-sm font-bold text-violet-400 uppercase tracking-wide flex items-center gap-2 pb-3 border-b border-slate-800">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                    Parámetros del Circuito
+                </h2>
+
+                <!-- V_TH -->
+                <div>
+                    <div class="flex justify-between items-center text-xs mb-1.5">
+                        <label class="text-slate-300 font-medium">Tensión Thévenin <span class="text-sky-400 font-bold">(V_TH)</span></label>
+                        <span id="vth-val" class="mono font-bold text-sky-400 bg-slate-900 px-2 py-0.5 rounded">12.0 V</span>
+                    </div>
+                    <input type="range" id="vth-slider" min="1" max="50" step="0.5" value="12" class="w-full bg-slate-800 accent-sky-400" oninput="update()">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-0.5"><span>1 V</span><span>50 V</span></div>
+                </div>
+
+                <!-- R_TH -->
+                <div>
+                    <div class="flex justify-between items-center text-xs mb-1.5">
+                        <label class="text-slate-300 font-medium">Resistencia Thévenin <span class="text-indigo-400 font-bold">(R_TH)</span></label>
+                        <span id="rth-val" class="mono font-bold text-indigo-400 bg-slate-900 px-2 py-0.5 rounded">8.0 Ω</span>
+                    </div>
+                    <input type="range" id="rth-slider" min="1" max="200" step="1" value="8" class="w-full bg-slate-800 accent-indigo-400" oninput="update()">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-0.5"><span>1 Ω</span><span>200 Ω</span></div>
+                </div>
+
+                <!-- R_L -->
+                <div>
+                    <div class="flex justify-between items-center text-xs mb-1.5">
+                        <label class="text-slate-300 font-medium">Carga <span class="text-fuchsia-400 font-bold">(R_L)</span></label>
+                        <span id="rl-val" class="mono font-bold text-fuchsia-400 bg-slate-900 px-2 py-0.5 rounded">8.0 Ω</span>
+                    </div>
+                    <input type="range" id="rl-slider" min="1" max="500" step="1" value="8" class="w-full bg-slate-800 accent-fuchsia-400" oninput="update()">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-0.5"><span>1 Ω</span><span>500 Ω</span></div>
+                </div>
+            </div>
+
+            <!-- Optimal condition badge -->
+            <div id="optimal-panel" class="glass-panel p-4 rounded-2xl border border-yellow-500/40 badge-optimal">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">★</span>
+                    <div>
+                        <p id="optimal-label" class="text-sm font-bold text-yellow-300">ACOPLAMIENTO PERFECTO</p>
+                        <p id="optimal-sub" class="text-xs text-yellow-500 mono">R_L = R_TH = 8 Ω</p>
+                    </div>
+                </div>
+                <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
+                    <div class="bg-yellow-950/30 rounded-lg p-2 border border-yellow-800/30">
+                        <span class="text-yellow-500 block">P_max</span>
+                        <span id="optimal-pmax" class="mono font-bold text-yellow-300 text-sm">4.500 W</span>
+                    </div>
+                    <div class="bg-yellow-950/30 rounded-lg p-2 border border-yellow-800/30">
+                        <span class="text-yellow-500 block">η en P_max</span>
+                        <span class="mono font-bold text-yellow-300 text-sm">50.0 %</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparison Table -->
+            <div class="glass-panel p-4 rounded-2xl">
+                <h3 class="text-xs font-bold uppercase tracking-wide text-slate-300 mb-3">📊 Tabla Comparativa</h3>
+                <table class="w-full text-xs text-left">
+                    <thead>
+                        <tr class="text-slate-500 border-b border-slate-800">
+                            <th class="pb-1.5">R_L</th>
+                            <th class="pb-1.5 text-right">P_L (W)</th>
+                            <th class="pb-1.5 text-right">η (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="compare-table" class="mono text-slate-300 space-y-1">
+                        <!-- filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Right: Chart + Results -->
+        <section class="lg:col-span-8 space-y-4">
+
+            <!-- P_L vs R_L Curve -->
+            <div class="glass-panel p-5 rounded-2xl">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-xs font-bold uppercase tracking-wide text-violet-400 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        Curva P_L vs R_L — Actualización en tiempo real
+                    </h2>
+                    <span class="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">Punto actual resaltado</span>
+                </div>
+                <div class="w-full bg-slate-950/90 rounded-xl border border-slate-800 p-2">
+                    <svg id="chart-svg" viewBox="0 0 560 240" class="w-full h-auto">
+                        <!-- Chart rendered by JS -->
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Telemetry Cards -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-sky-500">
+                    <span class="text-[11px] text-slate-400 block">V_TH</span>
+                    <span id="card-vth" class="text-base font-bold mono text-sky-400 mt-1 block">12.0 V</span>
+                    <span class="text-[10px] text-slate-500">Fuente Thévenin</span>
+                </div>
+                <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-indigo-500">
+                    <span class="text-[11px] text-slate-400 block">I_L actual</span>
+                    <span id="card-il" class="text-base font-bold mono text-indigo-400 mt-1 block">0.750 A</span>
+                    <span class="text-[10px] text-slate-500">= V_TH/(R_TH+R_L)</span>
+                </div>
+                <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-fuchsia-500">
+                    <span class="text-[11px] text-slate-400 block">P_L actual</span>
+                    <span id="card-pl" class="text-base font-bold mono text-fuchsia-400 mt-1 block">4.500 W</span>
+                    <span class="text-[10px] text-slate-500">= I_L² × R_L</span>
+                </div>
+                <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-yellow-500">
+                    <span class="text-[11px] text-slate-400 block">Rendimiento η</span>
+                    <span id="card-eta" class="text-base font-bold mono text-yellow-400 mt-1 block">50.0 %</span>
+                    <span class="text-[10px] text-slate-500">= R_L/(R_TH+R_L)</span>
+                </div>
+            </div>
+
+            <!-- Schematic + Power Balance -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                <!-- Schematic SVG -->
+                <div class="glass-panel p-4 rounded-2xl">
+                    <h3 class="text-xs font-bold uppercase tracking-wide text-slate-300 mb-3">⚡ Circuito Equivalente Thévenin</h3>
+                    <div class="bg-slate-950/80 rounded-xl border border-slate-800 p-3 overflow-x-auto">
+                        <svg id="circuit-svg" viewBox="0 0 260 160" class="w-full h-auto max-w-[260px] mx-auto font-mono select-none">
+                            <!-- rendered by JS -->
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Power balance -->
+                <div class="glass-panel p-4 rounded-2xl space-y-3">
+                    <h3 class="text-xs font-bold uppercase tracking-wide text-slate-300">🔋 Balance de Potencia</h3>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between items-center p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                            <span class="text-slate-400">P_total (fuente)</span>
+                            <span id="val-ptotal" class="mono font-bold text-white">9.000 W</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2.5 rounded-lg bg-indigo-950/30 border border-indigo-800/40">
+                            <span class="text-indigo-300">P_RTH (calor interno)</span>
+                            <span id="val-prth" class="mono font-bold text-indigo-400">4.500 W</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2.5 rounded-lg bg-fuchsia-950/30 border border-fuchsia-800/40">
+                            <span class="text-fuchsia-300">P_L (útil a carga)</span>
+                            <span id="val-pl2" class="mono font-bold text-fuchsia-400">4.500 W</span>
+                        </div>
+                        <!-- Power bar -->
+                        <div class="mt-2">
+                            <div class="flex text-[10px] text-slate-500 justify-between mb-1"><span>P_RTH</span><span>P_L</span></div>
+                            <div class="w-full h-4 rounded-full bg-slate-800 flex overflow-hidden">
+                                <div id="bar-prth" class="bg-indigo-500 h-full transition-all duration-300 flex items-center justify-center text-[9px] font-bold text-white" style="width:50%">RTH</div>
+                                <div id="bar-pl" class="bg-fuchsia-500 h-full transition-all duration-300 flex items-center justify-center text-[9px] font-bold text-white" style="width:50%">R_L</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center p-2 rounded-lg border border-yellow-700/40 bg-yellow-950/20 text-xs">
+                            <span class="text-yellow-400 font-semibold">P_L / P_max</span>
+                            <span id="val-ratio" class="mono font-bold text-yellow-300">100.0 %</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 rounded-lg border border-emerald-700/40 bg-emerald-950/20 text-xs">
+                            <span class="text-emerald-400 font-semibold">V_L en carga</span>
+                            <span id="val-vl" class="mono font-bold text-emerald-300">6.000 V</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto w-full border-t border-slate-900 py-4 text-center text-xs text-slate-500">
+        <p>Ingeniería Mecatrónica — Cátedra de Circuitos Eléctricos I & II &nbsp;|&nbsp; Transferencia Máxima de Potencia: R_L = R_TH → P_max = V_TH²/(4·R_TH)</p>
+    </footer>
+
+    <script>
+        function loadPreset(vth, rth, rl) {
+            document.getElementById('vth-slider').value = vth;
+            document.getElementById('rth-slider').value = rth;
+            document.getElementById('rl-slider').value = rl;
+            update();
+        }
+
+        function fmtR(r) {
+            if (r >= 1000) return (r/1000).toFixed(2) + ' kΩ';
+            return r.toFixed(1) + ' Ω';
+        }
+
+        function drawChart(Vth, Rth, Rl) {
+            const svg = document.getElementById('chart-svg');
+            const W = 560, H = 240;
+            const padL = 55, padR = 20, padT = 20, padB = 40;
+            const cW = W - padL - padR, cH = H - padT - padB;
+
+            // Build curve data: R_L from 0.1 to 5*Rth (or 500 if Rth is large)
+            const rlMax = Math.max(Rl * 3, Rth * 5, 20);
+            const steps = 200;
+            const Pmax = (Vth * Vth) / (4 * Rth);
+
+            // generate curve points
+            let pts = [];
+            for (let i = 1; i <= steps; i++) {
+                const r = (i / steps) * rlMax;
+                const p = (Vth * Vth * r) / Math.pow(Rth + r, 2);
+                pts.push({ r, p });
+            }
+
+            const maxP = Pmax * 1.15;
+            const toX = r => padL + (r / rlMax) * cW;
+            const toY = p => padT + cH - (p / maxP) * cH;
+
+            // Draw
+            let html = `<defs>
+                <linearGradient id="curveGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#a78bfa"/>
+                    <stop offset="100%" stop-color="#4f46e5" stop-opacity="0.3"/>
+                </linearGradient>
+            </defs>`;
+
+            // Grid lines
+            for (let i = 0; i <= 4; i++) {
+                const y = padT + (i / 4) * cH;
+                const pVal = maxP * (1 - i / 4);
+                html += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#1e293b" stroke-width="1"/>`;
+                html += `<text x="${padL - 4}" y="${y + 3}" fill="#64748b" font-size="8" text-anchor="end">${pVal.toFixed(1)}W</text>`;
+            }
+            // Vertical grid at Rth
+            const xOpt = toX(Rth);
+            html += `<line x1="${xOpt}" y1="${padT}" x2="${xOpt}" y2="${padT + cH}" stroke="#fbbf24" stroke-width="1" stroke-dasharray="4 3" opacity="0.7"/>`;
+            html += `<text x="${xOpt}" y="${H - padB + 14}" fill="#fbbf24" font-size="8" text-anchor="middle">R_TH=${fmtR(Rth)}</text>`;
+
+            // Current R_L vertical
+            if (Rl <= rlMax) {
+                const xCur = toX(Rl);
+                html += `<line x1="${xCur}" y1="${padT}" x2="${xCur}" y2="${padT + cH}" stroke="#e879f9" stroke-width="1" stroke-dasharray="4 3" opacity="0.7"/>`;
+            }
+
+            // Axes
+            html += `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + cH}" stroke="#475569" stroke-width="1.5"/>`;
+            html += `<line x1="${padL}" y1="${padT + cH}" x2="${W - padR}" y2="${padT + cH}" stroke="#475569" stroke-width="1.5"/>`;
+            html += `<text x="${padL - 28}" y="${padT + cH / 2}" fill="#94a3b8" font-size="9" text-anchor="middle" transform="rotate(-90,${padL - 28},${padT + cH / 2})">P_L (W)</text>`;
+            html += `<text x="${padL + cW / 2}" y="${H - 4}" fill="#94a3b8" font-size="9" text-anchor="middle">R_L (Ω)</text>`;
+
+            // Curve fill area
+            let fillPts = `${padL},${padT + cH} `;
+            for (const p of pts) { fillPts += `${toX(p.r)},${toY(p.p)} `; }
+            fillPts += `${toX(pts[pts.length - 1].r)},${padT + cH}`;
+            html += `<polygon points="${fillPts}" fill="url(#curveGrad)" opacity="0.25"/>`;
+
+            // Curve line
+            let d = `M ${toX(pts[0].r)} ${toY(pts[0].p)}`;
+            for (let i = 1; i < pts.length; i++) { d += ` L ${toX(pts[i].r)} ${toY(pts[i].p)}`; }
+            html += `<path d="${d}" fill="none" stroke="#a78bfa" stroke-width="2.5"/>`;
+
+            // P_max marker (at R_TH)
+            const yPmax = toY(Pmax);
+            html += `<circle cx="${xOpt}" cy="${yPmax}" r="5" fill="#fbbf24" stroke="#1e293b" stroke-width="1.5"/>`;
+            html += `<text x="${xOpt + 8}" y="${yPmax - 5}" fill="#fbbf24" font-size="9" font-weight="bold">P_max=${Pmax.toFixed(2)}W</text>`;
+
+            // Current point
+            if (Rl >= 1 && Rl <= rlMax) {
+                const curP = (Vth * Vth * Rl) / Math.pow(Rth + Rl, 2);
+                const cx = toX(Rl), cy = toY(curP);
+                const isOpt = Math.abs(Rl - Rth) < 0.5;
+                html += `<circle cx="${cx}" cy="${cy}" r="${isOpt ? 7 : 5}" fill="${isOpt ? '#fbbf24' : '#e879f9'}" stroke="#0f172a" stroke-width="2"/>`;
+                html += `<text x="${cx}" y="${cy - 10}" fill="${isOpt ? '#fbbf24' : '#e879f9'}" font-size="8" text-anchor="middle">${curP.toFixed(2)}W</text>`;
+            }
+
+            // X-axis labels
+            for (let i = 0; i <= 4; i++) {
+                const r = (i / 4) * rlMax;
+                html += `<text x="${toX(r)}" y="${padT + cH + 12}" fill="#64748b" font-size="8" text-anchor="middle">${Math.round(r)}</text>`;
+            }
+
+            svg.innerHTML = html;
+        }
+
+        function drawCircuit(Vth, Rth, Rl, Il, Vl) {
+            const svg = document.getElementById('circuit-svg');
+            const isOpt = Math.abs(Rl - Rth) < 0.5;
+            const rlColor = isOpt ? '#fbbf24' : '#e879f9';
+
+            svg.innerHTML = `
+                <!-- Top wire (V_TH positive to R_TH) -->
+                <line x1="30" y1="30" x2="80" y2="30" stroke="#0ea5e9" stroke-width="2"/>
+                <!-- R_TH -->
+                <rect x="80" y="22" width="60" height="16" rx="3" fill="#1e1b4b" stroke="#818cf8" stroke-width="1.5"/>
+                <text x="110" y="33" text-anchor="middle" fill="#818cf8" font-weight="bold" font-size="9">R_TH=${fmtR(Rth)}</text>
+                <!-- Wire to Node A -->
+                <line x1="140" y1="30" x2="190" y2="30" stroke="#94a3b8" stroke-width="2"/>
+                <!-- Node A dot -->
+                <circle cx="190" cy="30" r="4" fill="${rlColor}"/>
+                <!-- R_L branch -->
+                <line x1="190" y1="30" x2="190" y2="55" stroke="${rlColor}" stroke-width="2"/>
+                <rect x="178" y="55" width="24" height="50" rx="3" fill="#1a0036" stroke="${rlColor}" stroke-width="1.5"/>
+                <text x="190" y="84" text-anchor="middle" fill="${rlColor}" font-weight="bold" font-size="9">R_L</text>
+                <text x="190" y="97" text-anchor="middle" fill="${rlColor}" font-size="8">${fmtR(Rl)}</text>
+                <line x1="190" y1="105" x2="190" y2="130" stroke="#475569" stroke-width="2"/>
+                <!-- Bottom wire (GND) -->
+                <line x1="30" y1="130" x2="190" y2="130" stroke="#475569" stroke-width="2"/>
+                <!-- V_TH source (battery) -->
+                <line x1="30" y1="30" x2="30" y2="55" stroke="#0ea5e9" stroke-width="2"/>
+                <line x1="15" y1="55" x2="45" y2="55" stroke="#0ea5e9" stroke-width="2.5"/>
+                <line x1="20" y1="63" x2="40" y2="63" stroke="#0ea5e9" stroke-width="1.5"/>
+                <line x1="15" y1="71" x2="45" y2="71" stroke="#0ea5e9" stroke-width="2.5"/>
+                <line x1="20" y1="79" x2="40" y2="79" stroke="#0ea5e9" stroke-width="1.5"/>
+                <line x1="30" y1="79" x2="30" y2="130" stroke="#475569" stroke-width="2"/>
+                <text x="50" y="63" fill="#0ea5e9" font-size="8" font-weight="bold">+</text>
+                <text x="50" y="78" fill="#0ea5e9" font-size="8">V_TH</text>
+                <text x="50" y="90" fill="#0ea5e9" font-size="7">${Vth.toFixed(1)}V</text>
+                <!-- GND symbol -->
+                <line x1="110" y1="130" x2="110" y2="143" stroke="#64748b" stroke-width="1.5"/>
+                <line x1="102" y1="143" x2="118" y2="143" stroke="#64748b" stroke-width="1.5"/>
+                <line x1="105" y1="148" x2="115" y2="148" stroke="#64748b" stroke-width="1.5"/>
+                <line x1="108" y1="153" x2="112" y2="153" stroke="#64748b" stroke-width="1.5"/>
+                <!-- V_L label -->
+                <text x="216" y="85" fill="${rlColor}" font-size="8">V_L</text>
+                <text x="216" y="97" fill="${rlColor}" font-size="7" font-weight="bold">${Vl.toFixed(3)}V</text>
+                <!-- I_L label -->
+                <text x="155" y="48" fill="${rlColor}" font-size="7">I_L=${Il.toFixed(3)}A</text>
+                <!-- Optimal badge -->
+                ${isOpt ? `<rect x="60" y="6" width="130" height="13" rx="4" fill="#78350f"/>
+                <text x="125" y="16" text-anchor="middle" fill="#fbbf24" font-size="8" font-weight="bold">★ ACOPLAMIENTO PERFECTO</text>` : ''}
+            `;
+        }
+
+        function buildTable(Vth, Rth, Rl) {
+            const Pmax = (Vth * Vth) / (4 * Rth);
+            const cases = [
+                { label: `R_TH/4 = ${fmtR(Rth/4)}`, rl: Rth / 4 },
+                { label: `R_TH/2 = ${fmtR(Rth/2)}`, rl: Rth / 2 },
+                { label: `★ R_TH = ${fmtR(Rth)}`, rl: Rth, highlight: true },
+                { label: `2·R_TH = ${fmtR(2*Rth)}`, rl: Rth * 2 },
+                { label: `4·R_TH = ${fmtR(4*Rth)}`, rl: Rth * 4 },
+            ];
+            let html = '';
+            for (const c of cases) {
+                const pl = (Vth * Vth * c.rl) / Math.pow(Rth + c.rl, 2);
+                const eta = c.rl / (Rth + c.rl) * 100;
+                const ratio = pl / Pmax * 100;
+                const isActive = Math.abs(c.rl - Rl) < 0.5;
+                const rowStyle = c.highlight ? 'color:#fbbf24;font-weight:700;' : (isActive ? 'color:#e879f9;font-weight:600;' : '');
+                html += `<tr style="${rowStyle}">
+                    <td class="py-1 pr-2">${c.label}</td>
+                    <td class="py-1 text-right">${pl.toFixed(2)}</td>
+                    <td class="py-1 text-right">${eta.toFixed(0)}%</td>
+                </tr>`;
+            }
+            document.getElementById('compare-table').innerHTML = html;
+        }
+
+        function update() {
+            const Vth = parseFloat(document.getElementById('vth-slider').value);
+            const Rth = parseFloat(document.getElementById('rth-slider').value);
+            const Rl  = parseFloat(document.getElementById('rl-slider').value);
+
+            // Update slider labels
+            document.getElementById('vth-val').textContent = Vth.toFixed(1) + ' V';
+            document.getElementById('rth-val').textContent = fmtR(Rth);
+            document.getElementById('rl-val').textContent  = fmtR(Rl);
+
+            // Core calcs
+            const Il    = Vth / (Rth + Rl);
+            const Vl    = Il * Rl;
+            const Pl    = Il * Il * Rl;
+            const Prth  = Il * Il * Rth;
+            const Ptot  = Vth * Il;
+            const Pmax  = (Vth * Vth) / (4 * Rth);
+            const eta   = Rl / (Rth + Rl) * 100;
+            const ratio = Pmax > 0 ? (Pl / Pmax * 100) : 0;
+
+            // Cards
+            document.getElementById('card-vth').textContent = Vth.toFixed(1) + ' V';
+            document.getElementById('card-il').textContent  = Il.toFixed(3) + ' A';
+            document.getElementById('card-pl').textContent  = Pl.toFixed(3) + ' W';
+            document.getElementById('card-eta').textContent = eta.toFixed(1) + ' %';
+
+            // Power balance
+            document.getElementById('val-ptotal').textContent = Ptot.toFixed(3) + ' W';
+            document.getElementById('val-prth').textContent   = Prth.toFixed(3) + ' W';
+            document.getElementById('val-pl2').textContent    = Pl.toFixed(3) + ' W';
+            document.getElementById('val-ratio').textContent  = ratio.toFixed(1) + ' %';
+            document.getElementById('val-vl').textContent     = Vl.toFixed(3) + ' V';
+
+            // Power bar
+            const pPct = Ptot > 0 ? (Prth / Ptot * 100) : 50;
+            document.getElementById('bar-prth').style.width = pPct.toFixed(1) + '%';
+            document.getElementById('bar-pl').style.width   = (100 - pPct).toFixed(1) + '%';
+
+            // Optimal panel
+            const isOpt = Math.abs(Rl - Rth) < 0.5;
+            const optPanel = document.getElementById('optimal-panel');
+            document.getElementById('optimal-pmax').textContent = Pmax.toFixed(3) + ' W';
+            document.getElementById('optimal-sub').textContent  = `R_L = R_TH = ${fmtR(Rth)}`;
+            if (isOpt) {
+                optPanel.className = 'glass-panel p-4 rounded-2xl border border-yellow-500/60 badge-optimal';
+                document.getElementById('optimal-label').textContent = '★ ACOPLAMIENTO PERFECTO';
+                document.getElementById('header-status').textContent = `R_L = R_TH ★`;
+            } else {
+                optPanel.className = 'glass-panel p-4 rounded-2xl border border-slate-700/40';
+                document.getElementById('optimal-label').textContent = `P_max en R_L = ${fmtR(Rth)}`;
+                const diff = ((Rl - Rth) / Rth * 100).toFixed(0);
+                document.getElementById('header-status').textContent = Rl < Rth ? `Sub-carga ${diff}%` : `Sobre-carga +${diff}%`;
+            }
+
+            drawChart(Vth, Rth, Rl);
+            drawCircuit(Vth, Rth, Rl, Il, Vl);
+            buildTable(Vth, Rth, Rl);
+        }
+
+        update();
+    </script>
+</body>
+</html>
+

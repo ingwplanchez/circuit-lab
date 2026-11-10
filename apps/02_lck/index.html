@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de LCK - Ley de Corrientes de Kirchhoff</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Particle animation styling for electronic flow */
+        .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 flex flex-col justify-between">
+
+    <header class="max-w-6xl mx-auto w-full mb-6 text-center md:text-left border-b border-slate-800 pb-4">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-sky-400">Simulador de Ley de Corrientes de Kirchhoff (LCK)</h1>
+                <p class="text-slate-400 text-sm mt-1">Día 1 - Lección 2: Conservación de Carga en un Nodo Principal</p>
+            </div>
+            <div class="bg-emerald-950/80 border border-emerald-500/40 px-4 py-2 rounded-lg text-sm text-emerald-300 flex items-center gap-2">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Estado: <strong>Conservación de Carga Activa</strong></span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+
+        <!-- Controls Column -->
+        <section class="lg:col-span-5 bg-slate-800/80 p-6 rounded-2xl border border-slate-700/60 shadow-xl flex flex-col justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                    Parámetros de Entrada y Salida
+                </h2>
+
+                <div class="space-y-6">
+                    <!-- I1 Entrance Slider -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="i1-slider" class="text-sm font-medium text-slate-300">
+                                Corriente Entrante <span class="text-sky-400 font-bold">(I₁)</span>
+                            </label>
+                            <span id="i1-val" class="font-mono text-sm bg-slate-900 px-2.5 py-1 rounded text-sky-400 font-bold">4.00 mA</span>
+                        </div>
+                        <input type="range" id="i1-slider" min="0" max="10" step="0.1" value="4.0" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-400">
+                        <div class="flex justify-between text-xs text-slate-500 mt-1">
+                            <span>0.0 mA</span>
+                            <span>10.0 mA</span>
+                        </div>
+                    </div>
+
+                    <!-- I2 Entrance Slider -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="i2-slider" class="text-sm font-medium text-slate-300">
+                                Corriente Entrante <span class="text-indigo-400 font-bold">(I₂)</span>
+                            </label>
+                            <span id="i2-val" class="font-mono text-sm bg-slate-900 px-2.5 py-1 rounded text-indigo-400 font-bold">2.50 mA</span>
+                        </div>
+                        <input type="range" id="i2-slider" min="0" max="10" step="0.1" value="2.5" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-400">
+                        <div class="flex justify-between text-xs text-slate-500 mt-1">
+                            <span>0.0 mA</span>
+                            <span>10.0 mA</span>
+                        </div>
+                    </div>
+
+                    <!-- I3 Exit Fixed Slider -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="i3-slider" class="text-sm font-medium text-slate-300">
+                                Corriente Saliente Fijada <span class="text-amber-400 font-bold">(I₃)</span>
+                            </label>
+                            <span id="i3-val" class="font-mono text-sm bg-slate-900 px-2.5 py-1 rounded text-amber-400 font-bold">1.50 mA</span>
+                        </div>
+                        <input type="range" id="i3-slider" min="0" max="10" step="0.1" value="1.5" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-400">
+                        <div class="flex justify-between text-xs text-slate-500 mt-1">
+                            <span>0.0 mA</span>
+                            <span>10.0 mA</span>
+                        </div>
+                    </div>
+
+                    <!-- R1 Load Resistance Slider -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="r1-slider" class="text-sm font-medium text-slate-300">
+                                Carga en Carga de Salida 4 <span class="text-emerald-400 font-bold">(R₁)</span>
+                            </label>
+                            <span id="r1-val" class="font-mono text-sm bg-slate-900 px-2.5 py-1 rounded text-emerald-400 font-bold">1000 Ω</span>
+                        </div>
+                        <input type="range" id="r1-slider" min="100" max="5000" step="100" value="1000" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-400">
+                        <div class="flex justify-between text-xs text-slate-500 mt-1">
+                            <span>100 Ω</span>
+                            <span>5000 Ω (5 kΩ)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-700 grid grid-cols-2 gap-3">
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700/50">
+                    <span class="text-xs text-slate-400 block mb-1">Σ Corrientes Entrantes</span>
+                    <span id="itotal-in-display" class="text-base md:text-lg font-bold font-mono text-sky-400">6.50 mA</span>
+                </div>
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700/50">
+                    <span class="text-xs text-slate-400 block mb-1">Caída en R₁ (V_nodo)</span>
+                    <span id="vnode-display" class="text-base md:text-lg font-bold font-mono text-emerald-400">5.00 V</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Visualization & Diagram Column -->
+        <section class="lg:col-span-7 flex flex-col gap-6">
+
+            <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-700/60 shadow-xl flex flex-col items-center">
+                <div class="w-full flex justify-between items-center mb-3">
+                    <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Diagrama Vectorial del Nodo Principal N₁
+                    </h2>
+                    <span class="text-xs bg-slate-900 px-3 py-1 rounded-full text-slate-400 font-mono border border-slate-700">Puntitos = Flujo e⁻</span>
+                </div>
+
+                <!-- SVG Node Simulation Container -->
+                <div class="relative w-full bg-slate-900/90 rounded-xl p-4 border border-slate-700/50 flex justify-center items-center overflow-hidden">
+                    <svg id="node-svg" viewBox="0 0 500 320" class="w-full max-w-lg h-auto font-mono text-xs select-none">
+                        <!-- Definitions for arrowheads -->
+                        <defs>
+                            <marker id="arrow-sky" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8"/>
+                            </marker>
+                            <marker id="arrow-indigo" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#818cf8"/>
+                            </marker>
+                            <marker id="arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24"/>
+                            </marker>
+                            <marker id="arrow-emerald" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399"/>
+                            </marker>
+                        </defs>
+
+                        <!-- Conductive Wires connected to Central Node (250, 160) -->
+                        <!-- Branch 1 (Top-Left Inlet) -->
+                        <line x1="70" y1="50" x2="250" y2="160" stroke="#38bdf8" stroke-width="3" opacity="0.8"/>
+                        <!-- Branch 2 (Bottom-Left Inlet) -->
+                        <line x1="70" y1="270" x2="250" y2="160" stroke="#818cf8" stroke-width="3" opacity="0.8"/>
+                        <!-- Branch 3 (Top-Right Outlet) -->
+                        <line x1="250" y1="160" x2="430" y2="50" stroke="#fbbf24" stroke-width="3" opacity="0.8"/>
+                        <!-- Branch 4 (Bottom-Right Outlet) -->
+                        <line x1="250" y1="160" x2="430" y2="270" stroke="#34d399" stroke-width="3" opacity="0.8"/>
+
+                        <!-- Resistor R1 symbol on Branch 4 -->
+                        <rect x="330" y="195" width="40" height="20" rx="3" fill="#065f46" stroke="#34d399" stroke-width="2" transform="rotate(31, 350, 205)"/>
+                        <text x="365" y="225" fill="#34d399" font-weight="bold" font-size="11">R₁</text>
+
+                        <!-- Arrow indicators for current vector directions -->
+                        <path d="M 130 86 L 160 105" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-sky)"/>
+                        <path d="M 130 234 L 160 215" stroke="#818cf8" stroke-width="2" marker-end="url(#arrow-indigo)"/>
+                        <path d="M 340 105 L 370 86" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrow-amber)"/>
+                        <path d="M 340 215 L 370 234" stroke="#34d399" stroke-width="2" marker-end="url(#arrow-emerald)"/>
+
+                        <!-- Labels for Branches -->
+                        <text x="60" y="35" fill="#38bdf8" font-weight="bold" font-size="12">Entrada I₁ (+)</text>
+                        <text x="60" y="290" fill="#818cf8" font-weight="bold" font-size="12">Entrada I₂ (+)</text>
+                        <text x="380" y="35" fill="#fbbf24" font-weight="bold" font-size="12">Salida I₃ (-)</text>
+                        <text x="375" y="295" fill="#34d399" font-weight="bold" font-size="12">Salida Calculada I₄ (-)</text>
+
+                        <!-- Central Main Node N1 -->
+                        <circle cx="250" cy="160" r="14" fill="#1e293b" stroke="#f59e0b" stroke-width="3"/>
+                        <circle cx="250" cy="160" r="5" fill="#f59e0b"/>
+                        <text x="250" y="135" text-anchor="middle" fill="#f59e0b" font-weight="bold" font-size="13">Nodo N₁</text>
+                    </svg>
+
+                    <!-- Particle Overlay Canvas for smooth electron animation -->
+                    <canvas id="particle-canvas" width="500" height="320" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-700/60 shadow-xl flex-grow">
+                <h2 class="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M12 7h.01M15 7h.01"></path></svg>
+                    Ecuación de Balance Nodal: Σ I_entrantes = Σ I_salientes
+                </h2>
+
+                <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-700/70 font-mono text-sm space-y-3">
+                    <div class="flex flex-wrap items-center gap-2 justify-center md:justify-start text-base">
+                        <span class="text-sky-400 font-bold">I₁</span>
+                        <span>+</span>
+                        <span class="text-indigo-400 font-bold">I₂</span>
+                        <span>=</span>
+                        <span class="text-amber-400 font-bold">I₃</span>
+                        <span>+</span>
+                        <span class="text-emerald-400 font-bold">I₄</span>
+                    </div>
+
+                    <div id="equation-numeric" class="flex flex-wrap items-center gap-2 justify-center md:justify-start text-xs md:text-sm text-slate-300 border-t border-slate-800 pt-2">
+                        <!-- Numerical breakdown inserted dynamically -->
+                    </div>
+                </div>
+
+                <!-- Conservation Status Banner -->
+                <div id="conservation-banner" class="mt-4 p-3 rounded-xl border bg-emerald-950/40 border-emerald-500/50 flex items-center justify-between text-xs md:text-sm">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span class="text-slate-200">Balance Carga Nodal: <strong id="i-in-sum" class="text-sky-400">6.50 mA</strong> Entran = <strong id="i-out-sum" class="text-emerald-400">6.50 mA</strong> Salen</span>
+                    </div>
+                    <span class="font-mono text-xs px-2 py-1 bg-emerald-900/80 text-emerald-300 rounded font-semibold">ΔI = 0.00 mA</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="max-w-6xl mx-auto w-full mt-6 pt-4 border-t border-slate-800 text-center text-xs text-slate-500">
+        Simulador Didáctico de Electrónica | Módulo Interactivo de Repaso LCK
+    </footer>
+
+    <script>
+        // DOM Elements setup
+        const i1Slider = document.getElementById('i1-slider');
+        const i2Slider = document.getElementById('i2-slider');
+        const i3Slider = document.getElementById('i3-slider');
+        const r1Slider = document.getElementById('r1-slider');
+
+        const i1Val = document.getElementById('i1-val');
+        const i2Val = document.getElementById('i2-val');
+        const i3Val = document.getElementById('i3-val');
+        const r1Val = document.getElementById('r1-val');
+
+        const itotalInDisplay = document.getElementById('itotal-in-display');
+        const vnodeDisplay = document.getElementById('vnode-display');
+        const equationNumeric = document.getElementById('equation-numeric');
+
+        const iInSum = document.getElementById('i-in-sum');
+        const iOutSum = document.getElementById('i-out-sum');
+
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Particle System State
+        let particles = [];
+        const nodeCenter = { x: 250, y: 160 };
+
+        // Branch Paths coordinates (Source to Node for inlets, Node to Target for outlets)
+        const branchPaths = {
+            b1: { start: { x: 70, y: 50 }, end: nodeCenter, color: '#38bdf8' },
+            b2: { start: { x: 70, y: 270 }, end: nodeCenter, color: '#818cf8' },
+            b3: { start: nodeCenter, end: { x: 430, y: 50 }, color: '#fbbf24' },
+            b4: { start: nodeCenter, end: { x: 430, y: 270 }, color: '#34d399' }
+        };
+
+        // Main Calculation Engine
+        function updateSimulation() {
+            const i1 = parseFloat(i1Slider.value); // mA
+            const i2 = parseFloat(i2Slider.value); // mA
+            const i3 = parseFloat(i3Slider.value); // mA
+            const r1 = parseFloat(r1Slider.value); // Ohms
+
+            // Sum of incoming currents
+            const iInTotal = i1 + i2;
+
+            // LCK: I_in = I_out => I1 + I2 = I3 + I4 => I4 = (I1 + I2) - I3
+            let i4 = iInTotal - i3;
+
+            // Handle physical floor (no negative reverse current simulated in this simplified passive load mode)
+            if (i4 < 0) {
+                i4 = 0;
+            }
+
+            const iOutTotal = i3 + i4;
+
+            // Voltage at node across load R1 (V_node = I4 * R1)
+            const vNode = (i4 / 1000) * r1; // Volts
+
+            // Update DOM Values
+            i1Val.textContent = `${i1.toFixed(2)} mA`;
+            i2Val.textContent = `${i2.toFixed(2)} mA`;
+            i3Val.textContent = `${i3.toFixed(2)} mA`;
+            r1Val.textContent = `${r1} Ω`;
+
+            itotalInDisplay.textContent = `${iInTotal.toFixed(2)} mA`;
+            vnodeDisplay.textContent = `${vNode.toFixed(2)} V`;
+
+            // Update Equation Text
+            equationNumeric.innerHTML = `
+                <span class="text-sky-400 font-semibold">${i1.toFixed(2)} mA</span> + 
+                <span class="text-indigo-400 font-semibold">${i2.toFixed(2)} mA</span> = 
+                <span class="text-amber-400 font-semibold">${i3.toFixed(2)} mA</span> + 
+                <span class="text-emerald-400 font-bold">${i4.toFixed(2)} mA</span>
+            `;
+
+            iInSum.textContent = `${iInTotal.toFixed(2)} mA`;
+            iOutSum.textContent = `${iOutTotal.toFixed(2)} mA`;
+
+            // Adjust particle generation rates based on currents
+            updateParticleRates(i1, i2, i3, i4);
+        }
+
+        // Particle Class for Electron Flow Animation
+        class Particle {
+            constructor(pathKey, speedFactor, color) {
+                this.pathKey = pathKey;
+                this.path = branchPaths[pathKey];
+                this.progress = 0; // 0 to 1
+                this.speed = (0.005 + speedFactor * 0.003); // Speed proportional to current
+                this.color = color;
+            }
+
+            update() {
+                this.progress += this.speed;
+                return this.progress <= 1;
+            }
+
+            draw(context) {
+                const x = this.path.start.x + (this.path.end.x - this.path.start.x) * this.progress;
+                const y = this.path.start.y + (this.path.end.y - this.path.start.y) * this.progress;
+
+                context.beginPath();
+                context.arc(x, y, 3.5, 0, Math.PI * 2);
+                context.fillStyle = this.color;
+                context.shadowColor = this.color;
+                context.shadowBlur = 6;
+                context.fill();
+                context.shadowBlur = 0; // Reset shadow for performance
+            }
+        }
+
+        let currentRates = { i1: 0, i2: 0, i3: 0, i4: 0 };
+
+        function updateParticleRates(i1, i2, i3, i4) {
+            currentRates.i1 = i1;
+            currentRates.i2 = i2;
+            currentRates.i3 = i3;
+            currentRates.i4 = i4;
+        }
+
+        // Spawn particles based on current values
+        function spawnParticles() {
+            if (Math.random() < currentRates.i1 * 0.15) {
+                particles.push(new Particle('b1', currentRates.i1, '#38bdf8'));
+            }
+            if (Math.random() < currentRates.i2 * 0.15) {
+                particles.push(new Particle('b2', currentRates.i2, '#818cf8'));
+            }
+            if (Math.random() < currentRates.i3 * 0.15) {
+                particles.push(new Particle('b3', currentRates.i3, '#fbbf24'));
+            }
+            if (Math.random() < currentRates.i4 * 0.15) {
+                particles.push(new Particle('b4', currentRates.i4, '#34d399'));
+            }
+        }
+
+        // Main Animation Loop
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            spawnParticles();
+
+            // Filter & render active particles
+            particles = particles.filter(p => {
+                const alive = p.update();
+                if (alive) p.draw(ctx);
+                return alive;
+            });
+
+            requestAnimationFrame(animateParticles);
+        }
+
+        // Event Listeners
+        i1Slider.addEventListener('input', updateSimulation);
+        i2Slider.addEventListener('input', updateSimulation);
+        i3Slider.addEventListener('input', updateSimulation);
+        r1Slider.addEventListener('input', updateSimulation);
+
+        // Initial setup on window load
+        window.onload = function() {
+            updateSimulation();
+            animateParticles();
+        };
+    </script>
+</body>
+</html>

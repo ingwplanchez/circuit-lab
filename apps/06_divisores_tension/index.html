@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Divisores de Tensión & Efecto de Carga</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'Fira Code', monospace; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-3 sm:p-6 flex flex-col justify-between selection:bg-amber-500 selection:text-white">
+
+    <!-- Top Header -->
+    <header class="max-w-7xl mx-auto w-full mb-6 glass-panel rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-amber-500/25">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[11px] font-mono uppercase tracking-wider text-amber-400 font-bold bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/40">Día 2 • Lección 2</span>
+                    <span class="text-xs text-slate-400">Circuitos Eléctricos I & II</span>
+                </div>
+                <h1 class="text-lg sm:text-2xl font-bold text-white leading-tight">Divisores de Tensión & Criterio de Rigidez en Polarización</h1>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <div id="badge-rigidez" class="bg-slate-900 border px-3 py-1.5 rounded-xl flex items-center gap-2 border-emerald-500/40 text-emerald-300">
+                <span id="dot-rigidez" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span id="label-rigidez" class="text-xs font-semibold">Criterio: Divisor Rígido</span>
+            </div>
+            <a href="../../index.html" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 border border-slate-700 transition-colors">
+                ← Portal
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Grid -->
+    <main class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+
+        <!-- Controls Column (Left, 5 cols) -->
+        <section class="lg:col-span-5 space-y-5">
+            <div class="glass-panel p-5 rounded-2xl space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                    <h2 class="text-sm font-bold text-amber-400 uppercase tracking-wide flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                        Variables del Divisor Resistivo
+                    </h2>
+                    <div class="flex gap-2">
+                        <button id="btn-preset-ejercicio" class="text-xs text-amber-400 hover:text-amber-300 underline font-medium">BJT Ejemplo</button>
+                    </div>
+                </div>
+
+                <!-- Vs Slider -->
+                <div>
+                    <div class="flex justify-between items-center text-xs mb-1.5">
+                        <label class="text-slate-300 font-medium">Fuente de Alimentación <span class="text-sky-400 font-bold">(V_CC / V_s)</span></label>
+                        <span id="vcc-val" class="font-mono font-bold text-sky-400 bg-slate-900 px-2 py-0.5 rounded">15.0 V</span>
+                    </div>
+                    <input type="range" id="vcc-slider" min="1" max="30" step="0.5" value="15" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-400">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                        <span>1.0 V</span>
+                        <span>30.0 V</span>
+                    </div>
+                </div>
+
+                <!-- R1 Slider -->
+                <div>
+                    <div class="flex justify-between items-center text-xs mb-1.5">
+                        <label class="text-slate-300 font-medium">Resistencia Superior Pull-Up <span class="text-amber-400 font-bold">(R₁)</span></label>
+                        <span id="r1-val" class="font-mono font-bold text-amber-400 bg-slate-900 px-2 py-0.5 rounded">33.0 kΩ</span>
+                    </div>
+                    <input type="range" id="r1-slider" min="1" max="100" step="1" value="33" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                        <span>1 kΩ</span>
+                        <span>100 kΩ</span>
+                    </div>
+                </div>
+
+                <!-- R2 Slider -->
+                <div>
+                    <div class="flex justify-between items-center text-xs mb-1.5">
+                        <label class="text-slate-300 font-medium">Resistencia Inferior Pull-Down <span class="text-emerald-400 font-bold">(R₂)</span></label>
+                        <span id="r2-val" class="font-mono font-bold text-emerald-400 bg-slate-900 px-2 py-0.5 rounded">10.0 kΩ</span>
+                    </div>
+                    <input type="range" id="r2-slider" min="1" max="100" step="1" value="10" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-400">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                        <span>1 kΩ</span>
+                        <span>100 kΩ</span>
+                    </div>
+                </div>
+
+                <!-- RL Toggle & Slider -->
+                <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                            <label for="rl-connected" class="text-xs font-bold text-rose-300">Carga Acoplada (R_L / R_in(base))</label>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="rl-connected" class="sr-only peer" checked>
+                            <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rose-500"></div>
+                            <span id="rl-status-label" class="ml-2 text-[11px] font-semibold text-rose-400">Conectada</span>
+                        </label>
+                    </div>
+
+                    <div id="rl-slider-container">
+                        <div class="flex justify-between items-center text-xs mb-1">
+                            <span class="text-slate-400 text-[11px]">Valor de Carga R_L:</span>
+                            <span id="rl-val" class="font-mono font-bold text-rose-400 bg-slate-950 px-2 py-0.5 rounded">47.0 kΩ</span>
+                        </div>
+                        <input type="range" id="rl-slider" min="1" max="300" step="1" value="47" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-400">
+                        <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                            <span>1 kΩ (Carga Pesada)</span>
+                            <span>300 kΩ (Carga Ligera)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel de Análisis del Criterio de Rigidez -->
+            <div class="glass-panel p-5 rounded-2xl space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                    <span>⚖️</span> Diagnóstico de Rigidez del Divisor (Factor ×10)
+                </h3>
+                <div class="space-y-2 text-xs font-mono">
+                    <div class="flex justify-between items-center p-2 rounded-lg bg-slate-900/60 border border-slate-800/80">
+                        <span class="text-slate-400">Límite para Rigidez (10 × R₂):</span>
+                        <span id="val-10r2" class="font-bold text-emerald-400">100.0 kΩ</span>
+                    </div>
+                    <div class="flex justify-between items-center p-2 rounded-lg bg-slate-900/60 border border-slate-800/80">
+                        <span class="text-slate-400">Carga Actual R_L:</span>
+                        <span id="val-rl-actual" class="font-bold text-rose-400">47.0 kΩ</span>
+                    </div>
+                    <div class="flex justify-between items-center p-2 rounded-lg bg-slate-900/60 border border-slate-800/80">
+                        <span class="text-slate-400">R₂ Efectiva Bajo Carga (R₂ ∥ R_L):</span>
+                        <span id="val-r2-paralelo" class="font-bold text-indigo-400">8.25 kΩ</span>
+                    </div>
+                    <div class="flex justify-between items-center p-2.5 rounded-lg bg-amber-950/40 border border-amber-800/50">
+                        <span class="text-amber-300 font-bold">Error de Regulación por Carga:</span>
+                        <span id="val-error-percent" class="text-sm font-extrabold text-amber-400">14.02 %</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Visual & Results Column (Right, 7 cols) -->
+        <section class="lg:col-span-7 space-y-5">
+
+            <!-- Interactive Schematic SVG -->
+            <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-xs font-bold uppercase tracking-wide text-amber-400 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Esquema Esquemático del Divisor con Nodos y Carga
+                    </h2>
+                    <span class="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">Cálculo instantáneo</span>
+                </div>
+
+                <!-- SVG Canvas -->
+                <div class="w-full bg-slate-950/90 rounded-xl border border-slate-800 p-2 sm:p-4 overflow-x-auto">
+                    <svg viewBox="0 0 540 280" class="w-full h-auto max-w-[540px] mx-auto text-xs font-mono select-none">
+                        <defs>
+                            <marker id="arr-sky" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
+                            </marker>
+                            <marker id="arr-emerald" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#34d399" />
+                            </marker>
+                            <marker id="arr-rose" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#fb7185" />
+                            </marker>
+                        </defs>
+
+                        <!-- Rails -->
+                        <!-- Ground Wire -->
+                        <line x1="80" y1="240" x2="460" y2="240" stroke="#475569" stroke-width="3" />
+                        <!-- Ground Symbols -->
+                        <line x1="220" y1="240" x2="220" y2="255" stroke="#64748b" stroke-width="2" />
+                        <line x1="208" y1="255" x2="232" y2="255" stroke="#64748b" stroke-width="2" />
+                        <line x1="213" y1="261" x2="227" y2="261" stroke="#64748b" stroke-width="2" />
+                        <line x1="217" y1="267" x2="223" y2="267" stroke="#64748b" stroke-width="2" />
+                        <text x="236" y="260" fill="#64748b" font-size="10">GND (0 V)</text>
+
+                        <!-- Source Vcc top terminal -->
+                        <line x1="220" y1="25" x2="220" y2="45" stroke="#38bdf8" stroke-width="3" />
+                        <circle cx="220" cy="25" r="5" fill="#38bdf8" stroke="#ffffff" stroke-width="2" />
+                        <text x="220" y="15" text-anchor="middle" fill="#38bdf8" font-weight="bold" font-size="12">+ V_CC</text>
+                        <text id="svg-vcc-txt" x="250" y="28" fill="#38bdf8" font-size="11" font-weight="bold">15.0 V</text>
+
+                        <!-- Current Arrow I_R1 -->
+                        <line x1="230" y1="52" x2="230" y2="72" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#arr-sky)" />
+                        <text id="svg-ir1-txt" x="260" y="65" fill="#38bdf8" font-size="9">363.7 µA</text>
+
+                        <!-- Resistor R1 -->
+                        <line x1="220" y1="45" x2="220" y2="75" stroke="#38bdf8" stroke-width="2.5" />
+                        <rect x="210" y="75" width="20" height="45" rx="3" fill="#1e293b" stroke="#f59e0b" stroke-width="2" />
+                        <text x="220" y="102" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="10">R₁</text>
+                        <text id="svg-r1-txt" x="180" y="102" text-anchor="middle" fill="#94a3b8" font-size="9">33 kΩ</text>
+                        <line x1="220" y1="120" x2="220" y2="140" stroke="#94a3b8" stroke-width="2.5" />
+
+                        <!-- Central Node V_out / V_B -->
+                        <circle cx="220" cy="140" r="6" fill="#f59e0b" stroke="#ffffff" stroke-width="2" />
+                        <rect x="75" y="130" width="135" height="22" rx="4" fill="#78350f" />
+                        <text x="142" y="145" text-anchor="middle" fill="#fef3c7" font-weight="bold" font-size="10">Nodo Salida (V_out)</text>
+                        <text id="svg-vout-txt" x="142" y="167" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="12">3.00 V</text>
+
+                        <!-- Resistor R2 (Down) -->
+                        <line x1="220" y1="140" x2="220" y2="165" stroke="#34d399" stroke-width="2.5" />
+                        <line x1="230" y1="150" x2="230" y2="170" stroke="#34d399" stroke-width="1.5" marker-end="url(#arr-emerald)" />
+                        <text id="svg-ir2-txt" x="260" y="163" fill="#34d399" font-size="9">299.9 µA</text>
+                        
+                        <rect x="210" y="170" width="20" height="45" rx="3" fill="#1e293b" stroke="#34d399" stroke-width="2" />
+                        <text x="220" y="197" text-anchor="middle" fill="#34d399" font-weight="bold" font-size="10">R₂</text>
+                        <text id="svg-r2-txt" x="180" y="197" text-anchor="middle" fill="#94a3b8" font-size="9">10 kΩ</text>
+                        <line x1="220" y1="215" x2="220" y2="240" stroke="#475569" stroke-width="2.5" />
+
+                        <!-- Horizontal connection to Load RL -->
+                        <line x1="220" y1="140" x2="380" y2="140" stroke="#94a3b8" stroke-width="2.5" />
+
+                        <!-- Load Group -->
+                        <g id="svg-rl-group">
+                            <line x1="270" y1="132" x2="330" y2="132" stroke="#fb7185" stroke-width="1.5" marker-end="url(#arr-rose)" />
+                            <text id="svg-il-txt" x="300" y="125" text-anchor="middle" fill="#fb7185" font-size="9">I_L: 63.8 µA</text>
+
+                            <circle cx="380" cy="140" r="4" fill="#fb7185" />
+                            <line x1="380" y1="140" x2="380" y2="170" stroke="#fb7185" stroke-width="2.5" />
+                            <rect x="370" y="170" width="20" height="45" rx="3" fill="#1e293b" stroke="#fb7185" stroke-width="2" />
+                            <text x="380" y="197" text-anchor="middle" fill="#fb7185" font-weight="bold" font-size="10">R_L</text>
+                            <text id="svg-rl-txt" x="425" y="197" text-anchor="middle" fill="#fb7185" font-size="9">47 kΩ</text>
+                            <line x1="380" y1="215" x2="380" y2="240" stroke="#475569" stroke-width="2.5" />
+                        </g>
+
+                        <!-- Load Disconnected Indicator -->
+                        <g id="svg-rl-disconnected" class="hidden">
+                            <line x1="280" y1="135" x2="305" y2="148" stroke="#ef4444" stroke-width="3" />
+                            <circle cx="280" cy="140" r="3" fill="#ef4444" />
+                            <circle cx="310" cy="140" r="3" fill="#ef4444" />
+                            <text x="380" y="180" text-anchor="middle" fill="#64748b" font-style="italic" font-size="10">Carga Desconectada</text>
+                            <text x="380" y="195" text-anchor="middle" fill="#64748b" font-style="italic" font-size="9">(R_L = ∞)</text>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Comparison Telemetry Cards -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-sky-500">
+                    <span class="text-[11px] text-slate-400 block">V_out en Vacío (NL)</span>
+                    <span id="card-vnl" class="text-base sm:text-lg font-bold font-mono text-sky-400">3.49 V</span>
+                    <span class="text-[10px] text-slate-500 block mt-0.5">Sin carga (Ideal)</span>
+                </div>
+
+                <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-amber-500">
+                    <span class="text-[11px] text-slate-400 block">V_out Real Bajo Carga</span>
+                    <span id="card-vl" class="text-base sm:text-lg font-bold font-mono text-amber-400">3.00 V</span>
+                    <span id="card-vl-percent" class="text-[10px] text-amber-400/80 block mt-0.5">20.0% de V_CC</span>
+                </div>
+
+                <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-rose-500">
+                    <span class="text-[11px] text-slate-400 block">Caída por Carga (ΔV)</span>
+                    <span id="card-deltav" class="text-base sm:text-lg font-bold font-mono text-rose-400">-0.49 V</span>
+                    <span class="text-[10px] text-slate-500 block mt-0.5">Pérdida de tensión</span>
+                </div>
+
+                <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-purple-500">
+                    <span class="text-[11px] text-slate-400 block">Corriente de Carga</span>
+                    <span id="card-il" class="text-base sm:text-lg font-bold font-mono text-purple-400">63.8 µA</span>
+                    <span id="card-il-percent" class="text-[10px] text-purple-400/80 block mt-0.5">17.5% de I_total</span>
+                </div>
+            </div>
+
+            <!-- Comparison Bar & Engineering Insight -->
+            <div class="glass-panel p-5 rounded-2xl space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                        <span>📊</span> Comparativa de Tensión: Vacío vs Carga Real
+                    </h3>
+                    <span class="text-xs font-mono text-slate-400">Escala 0 a V_CC</span>
+                </div>
+
+                <!-- Voltage Level Bars -->
+                <div class="space-y-3 text-xs">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sky-300 font-medium font-mono">Tensión Ideal en Vacío (V_NL): <strong id="bar-vnl-val">3.49 V</strong></span>
+                            <span class="text-slate-500 text-[11px]">R_L = ∞</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                            <div id="bar-vnl" class="bg-sky-400 h-2.5 rounded-full transition-all duration-300" style="width: 23.3%"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-amber-300 font-medium font-mono">Tensión Real con Carga (V_L): <strong id="bar-vl-val">3.00 V</strong></span>
+                            <span id="bar-error-tag" class="text-[10px] font-mono text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/40">Error: 14.0%</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                            <div id="bar-vl" class="bg-amber-400 h-2.5 rounded-full transition-all duration-300" style="width: 20.0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Engineering Recommendation -->
+                <div id="box-recommendation" class="p-3.5 rounded-xl bg-slate-900/90 border border-amber-500/30 text-xs space-y-1.5">
+                    <div class="flex items-center gap-2 text-amber-400 font-semibold">
+                        <span class="text-base">⚠️</span>
+                        <span id="rec-title">Aviso de Diseño: Divisor Afectado por la Carga (Error > 10%)</span>
+                    </div>
+                    <p id="rec-body" class="text-slate-400 leading-relaxed">
+                        La resistencia de carga $R_L = 47\text{ k}\Omega$ es menor que $10 \times R_2 = 100\text{ k}\Omega$. Para estabilizar el punto de polarización en un transistor BJT o evitar este error de casi $0.5\text{ V}$, se recomienda reducir $R_1$ y $R_2$ manteniendo su proporción (por ejemplo: $R_1 = 3.3\text{ k}\Omega, R_2 = 1.0\text{ k}\Omega$), logrando que el divisor se vuelva verdaderamente rígido.
+                    </p>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto w-full mt-6 text-center text-xs text-slate-500 py-3 border-t border-slate-900">
+        <p>Circuitos Eléctricos I & II • Cátedra de Mecatrónica • Repaso Intensivo</p>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        // DOM Elements
+        const vccSlider = document.getElementById('vcc-slider');
+        const r1Slider = document.getElementById('r1-slider');
+        const r2Slider = document.getElementById('r2-slider');
+        const rlSlider = document.getElementById('rl-slider');
+        const rlConnected = document.getElementById('rl-connected');
+        const btnPresetEjercicio = document.getElementById('btn-preset-ejercicio');
+
+        // Labels
+        const vccVal = document.getElementById('vcc-val');
+        const r1Val = document.getElementById('r1-val');
+        const r2Val = document.getElementById('r2-val');
+        const rlVal = document.getElementById('rl-val');
+        const rlStatusLabel = document.getElementById('rl-status-label');
+        const rlSliderContainer = document.getElementById('rl-slider-container');
+
+        // Diagnostic elements
+        const val10R2 = document.getElementById('val-10r2');
+        const valRLActual = document.getElementById('val-rl-actual');
+        const valR2Paralelo = document.getElementById('val-r2-paralelo');
+        const valErrorPercent = document.getElementById('val-error-percent');
+
+        // SVG Elements
+        const svgVccTxt = document.getElementById('svg-vcc-txt');
+        const svgIr1Txt = document.getElementById('svg-ir1-txt');
+        const svgR1Txt = document.getElementById('svg-r1-txt');
+        const svgVoutTxt = document.getElementById('svg-vout-txt');
+        const svgIr2Txt = document.getElementById('svg-ir2-txt');
+        const svgR2Txt = document.getElementById('svg-r2-txt');
+        const svgIlTxt = document.getElementById('svg-il-txt');
+        const svgRlTxt = document.getElementById('svg-rl-txt');
+        const svgRlGroup = document.getElementById('svg-rl-group');
+        const svgRlDisconnected = document.getElementById('svg-rl-disconnected');
+
+        // Cards
+        const cardVnl = document.getElementById('card-vnl');
+        const cardVl = document.getElementById('card-vl');
+        const cardVlPercent = document.getElementById('card-vl-percent');
+        const cardDeltaV = document.getElementById('card-deltav');
+        const cardIl = document.getElementById('card-il');
+        const cardIlPercent = document.getElementById('card-il-percent');
+
+        // Bars
+        const barVnlVal = document.getElementById('bar-vnl-val');
+        const barVlVal = document.getElementById('bar-vl-val');
+        const barVnl = document.getElementById('bar-vnl');
+        const barVl = document.getElementById('bar-vl');
+        const barErrorTag = document.getElementById('bar-error-tag');
+
+        // Badge & Recommendation
+        const badgeRigidez = document.getElementById('badge-rigidez');
+        const dotRigidez = document.getElementById('dot-rigidez');
+        const labelRigidez = document.getElementById('label-rigidez');
+        const boxRecommendation = document.getElementById('box-recommendation');
+        const recTitle = document.getElementById('rec-title');
+        const recBody = document.getElementById('rec-body');
+
+        function updateDivisor() {
+            const Vcc = parseFloat(vccSlider.value);
+            const R1_k = parseFloat(r1Slider.value);
+            const R2_k = parseFloat(r2Slider.value);
+            const RL_k = parseFloat(rlSlider.value);
+            const isRLOn = rlConnected.checked;
+
+            const R1 = R1_k * 1000;
+            const R2 = R2_k * 1000;
+            const RL = RL_k * 1000;
+
+            // Update Input Labels
+            vccVal.textContent = Vcc.toFixed(1) + ' V';
+            r1Val.textContent = R1_k.toFixed(1) + ' kΩ';
+            r2Val.textContent = R2_k.toFixed(1) + ' kΩ';
+            rlVal.textContent = RL_k.toFixed(1) + ' kΩ';
+
+            if (isRLOn) {
+                rlStatusLabel.textContent = 'Conectada';
+                rlStatusLabel.className = 'ml-2 text-[11px] font-semibold text-rose-400';
+                rlSliderContainer.classList.remove('opacity-40', 'pointer-events-none');
+                svgRlGroup.classList.remove('hidden');
+                svgRlDisconnected.classList.add('hidden');
+            } else {
+                rlStatusLabel.textContent = 'Desconectada (Vacío)';
+                rlStatusLabel.className = 'ml-2 text-[11px] font-semibold text-slate-500';
+                rlSliderContainer.classList.add('opacity-40', 'pointer-events-none');
+                svgRlGroup.classList.add('hidden');
+                svgRlDisconnected.classList.remove('hidden');
+            }
+
+            // Ideal No-Load Voltage
+            const V_NL = Vcc * (R2 / (R1 + R2));
+
+            // Loaded calculations
+            let R2_eff = R2;
+            let V_L = V_NL;
+            let I_L = 0;
+
+            if (isRLOn) {
+                R2_eff = (R2 * RL) / (R2 + RL);
+                V_L = Vcc * (R2_eff / (R1 + R2_eff));
+                I_L = V_L / RL; // A
+            }
+
+            const I_total = (Vcc - V_L) / R1; // A
+            const I_R2 = V_L / R2; // A
+            const deltaV = V_L - V_NL;
+            const errorPercent = isRLOn ? Math.abs((V_NL - V_L) / V_NL) * 100 : 0;
+
+            // Format Currents
+            function formatAmps(a) {
+                if (a >= 0.001) return (a * 1000).toFixed(2) + ' mA';
+                return (a * 1000000).toFixed(1) + ' µA';
+            }
+
+            // Update SVG Texts
+            svgVccTxt.textContent = Vcc.toFixed(1) + ' V';
+            svgR1Txt.textContent = R1_k.toFixed(1) + ' kΩ';
+            svgR2Txt.textContent = R2_k.toFixed(1) + ' kΩ';
+            svgRlTxt.textContent = RL_k.toFixed(1) + ' kΩ';
+            svgVoutTxt.textContent = V_L.toFixed(2) + ' V';
+            svgIr1Txt.textContent = formatAmps(I_total);
+            svgIr2Txt.textContent = formatAmps(I_R2);
+            svgIlTxt.textContent = 'I_L: ' + formatAmps(I_L);
+
+            // Update Telemetry Cards
+            cardVnl.textContent = V_NL.toFixed(2) + ' V';
+            cardVl.textContent = V_L.toFixed(2) + ' V';
+            cardVlPercent.textContent = ((V_L / Vcc) * 100).toFixed(1) + '% de V_CC';
+            cardDeltaV.textContent = deltaV.toFixed(2) + ' V';
+            cardIl.textContent = isRLOn ? formatAmps(I_L) : '0.0 µA';
+            cardIlPercent.textContent = isRLOn ? ((I_L / I_total) * 100).toFixed(1) + '% de I_total' : '0%';
+
+            // Update Bars
+            barVnlVal.textContent = V_NL.toFixed(2) + ' V';
+            barVlVal.textContent = V_L.toFixed(2) + ' V';
+            barVnl.style.width = Math.min((V_NL / Vcc) * 100, 100) + '%';
+            barVl.style.width = Math.min((V_L / Vcc) * 100, 100) + '%';
+            barErrorTag.textContent = 'Error: ' + errorPercent.toFixed(1) + '%';
+
+            // Diagnostic Panel Values
+            const limit10R2 = 10 * R2_k;
+            val10R2.textContent = limit10R2.toFixed(1) + ' kΩ';
+            valRLActual.textContent = isRLOn ? RL_k.toFixed(1) + ' kΩ' : '∞ (Vacío)';
+            valR2Paralelo.textContent = (R2_eff / 1000).toFixed(2) + ' kΩ';
+            valErrorPercent.textContent = errorPercent.toFixed(2) + ' %';
+
+            // Rigidity Criteria Check
+            const isRigid = !isRLOn || (RL_k >= limit10R2);
+
+            if (!isRLOn) {
+                badgeRigidez.className = 'bg-slate-900 border px-3 py-1.5 rounded-xl flex items-center gap-2 border-sky-500/40 text-sky-300';
+                dotRigidez.className = 'w-2.5 h-2.5 rounded-full bg-sky-400';
+                labelRigidez.textContent = 'Circuito en Vacío (Sin Carga)';
+
+                boxRecommendation.className = 'p-3.5 rounded-xl bg-slate-900/90 border border-sky-500/30 text-xs space-y-1.5';
+                recTitle.textContent = 'Condición Ideal a Circuito Abierto';
+                recTitle.className = 'text-sky-300 font-semibold';
+                recBody.innerHTML = `El divisor entrega su voltaje teórico perfecto $V_{NL} = ${V_NL.toFixed(2)}\\text{ V}$. Conecta la carga $R_L$ para observar el colapso de tensión por corriente drenada.`;
+            } else if (isRigid) {
+                badgeRigidez.className = 'bg-slate-900 border px-3 py-1.5 rounded-xl flex items-center gap-2 border-emerald-500/40 text-emerald-300';
+                dotRigidez.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
+                labelRigidez.textContent = 'Criterio: Divisor Rígido / Estable (Error < 10%)';
+
+                boxRecommendation.className = 'p-3.5 rounded-xl bg-slate-900/90 border border-emerald-500/30 text-xs space-y-1.5';
+                recTitle.textContent = '¡Excelente Diseño! Divisor Rígido y Firme';
+                recTitle.className = 'text-emerald-300 font-semibold';
+                recBody.innerHTML = `Como $R_L = ${RL_k.toFixed(1)}\\text{ k}\\Omega \\ge 10 \\times R_2 = ${limit10R2.toFixed(1)}\\text{ k}\\Omega$, la carga solo desvía el <strong>${((I_L/I_total)*100).toFixed(1)}%</strong> de la corriente total. La tensión real apenas disminuye un <strong>${errorPercent.toFixed(1)}%</strong> respecto al valor en vacío, lo que garantiza estabilidad frente a tolerancias o reemplazo de transistores.`;
+            } else {
+                badgeRigidez.className = 'bg-slate-900 border px-3 py-1.5 rounded-xl flex items-center gap-2 border-amber-500/40 text-amber-300';
+                dotRigidez.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping';
+                labelRigidez.textContent = 'Criterio: Divisor Blando / Sensible a Carga';
+
+                boxRecommendation.className = 'p-3.5 rounded-xl bg-slate-900/90 border border-amber-500/40 text-xs space-y-1.5';
+                recTitle.textContent = `Aviso de Ingeniería: Efecto de Carga Apreciable (Error = ${errorPercent.toFixed(1)}%)`;
+                recTitle.className = 'text-amber-300 font-semibold';
+                recBody.innerHTML = `La carga $R_L = ${RL_k.toFixed(1)}\\text{ k}\\Omega$ es inferior a $10 \\times R_2 = ${limit10R2.toFixed(1)}\\text{ k}\\Omega$, drenando el <strong>${((I_L/I_total)*100).toFixed(1)}%</strong> de la corriente total y reduciendo el voltaje de salida en <strong>${Math.abs(deltaV).toFixed(2)}\\text{ V}</strong>. En etapas analógicas con BJT esto desplazaría peligrosamente el punto de reposo $Q$. Solución: redimensionar $R_1$ y $R_2$ a valores menores para aumentar la rigidez.`;
+            }
+        }
+
+        // Event Listeners
+        [vccSlider, r1Slider, r2Slider, rlSlider].forEach(slider => {
+            slider.addEventListener('input', updateDivisor);
+        });
+
+        rlConnected.addEventListener('change', updateDivisor);
+
+        btnPresetEjercicio.addEventListener('click', () => {
+            vccSlider.value = 15;
+            r1Slider.value = 33;
+            r2Slider.value = 10;
+            rlSlider.value = 47;
+            rlConnected.checked = true;
+            updateDivisor();
+        });
+
+        // Initialize
+        updateDivisor();
+    </script>
+</body>
+</html>

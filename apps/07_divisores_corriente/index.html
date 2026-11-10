@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Divisores de Corriente Multirama</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'Fira Code', monospace; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-3 sm:p-6 flex flex-col justify-between selection:bg-purple-500 selection:text-white">
+
+    <!-- Top Header -->
+    <header class="max-w-7xl mx-auto w-full mb-6 glass-panel rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/25">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                </svg>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[11px] font-mono uppercase tracking-wider text-purple-400 font-bold bg-purple-950/60 px-2 py-0.5 rounded border border-purple-800/40">Día 2 • Lección 3</span>
+                    <span class="text-xs text-slate-400">Circuitos Eléctricos I & II</span>
+                </div>
+                <h1 class="text-lg sm:text-2xl font-bold text-white leading-tight">Divisores de Corriente & Formulación por Conductancias</h1>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <div class="bg-slate-900 border border-emerald-500/40 px-3 py-1.5 rounded-xl flex items-center gap-2 text-emerald-300">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-xs font-semibold">LCK Activa: <strong id="header-lck-status">12.00 mA = 12.00 mA</strong></span>
+            </div>
+            <a href="../../index.html" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 border border-slate-700 transition-colors">
+                ← Portal
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Grid -->
+    <main class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+
+        <!-- Controls Column (Left, 5 cols) -->
+        <section class="lg:col-span-5 space-y-5">
+            <div class="glass-panel p-5 rounded-2xl space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                    <h2 class="text-sm font-bold text-purple-400 uppercase tracking-wide flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                        Parámetros de Corriente & Ramas
+                    </h2>
+                    <div class="flex gap-2">
+                        <button id="btn-preset-ejercicio" class="text-xs text-purple-400 hover:text-purple-300 underline font-medium">Ejemplo 3 Ramas</button>
+                    </div>
+                </div>
+
+                <!-- Is Slider -->
+                <div>
+                    <div class="flex justify-between items-center text-xs mb-1.5">
+                        <label class="text-slate-300 font-medium">Corriente Total de Entrada <span class="text-purple-400 font-bold">(I_total)</span></label>
+                        <span id="itotal-val" class="font-mono font-bold text-purple-400 bg-slate-900 px-2 py-0.5 rounded">12.0 mA</span>
+                    </div>
+                    <input type="range" id="itotal-slider" min="1" max="50" step="0.5" value="12" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-400">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                        <span>1.0 mA</span>
+                        <span>50.0 mA</span>
+                    </div>
+                </div>
+
+                <!-- R1 Slider -->
+                <div>
+                    <div class="flex justify-between items-center text-xs mb-1.5">
+                        <label class="text-slate-300 font-medium">Resistencia Rama 1 <span class="text-sky-400 font-bold">(R₁)</span></label>
+                        <span id="r1-val" class="font-mono font-bold text-sky-400 bg-slate-900 px-2 py-0.5 rounded">470 Ω</span>
+                    </div>
+                    <input type="range" id="r1-slider" min="50" max="3000" step="10" value="470" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-400">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                        <span>50 Ω</span>
+                        <span>3.0 kΩ</span>
+                    </div>
+                </div>
+
+                <!-- R2 Slider -->
+                <div>
+                    <div class="flex justify-between items-center text-xs mb-1.5">
+                        <label class="text-slate-300 font-medium">Resistencia Rama 2 <span class="text-emerald-400 font-bold">(R₂)</span></label>
+                        <span id="r2-val" class="font-mono font-bold text-emerald-400 bg-slate-900 px-2 py-0.5 rounded">1200 Ω</span>
+                    </div>
+                    <input type="range" id="r2-slider" min="50" max="3000" step="10" value="1200" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-400">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                        <span>50 Ω</span>
+                        <span>3.0 kΩ</span>
+                    </div>
+                </div>
+
+                <!-- Rama 3 Toggle & Slider -->
+                <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                            <label for="r3-connected" class="text-xs font-bold text-amber-300">Tercera Rama Opcional (R₃)</label>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="r3-connected" class="sr-only peer" checked>
+                            <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                            <span id="r3-status-label" class="ml-2 text-[11px] font-semibold text-amber-400">Conectada</span>
+                        </label>
+                    </div>
+
+                    <div id="r3-slider-container">
+                        <div class="flex justify-between items-center text-xs mb-1">
+                            <span class="text-slate-400 text-[11px]">Resistencia Rama 3 (R₃):</span>
+                            <span id="r3-val" class="font-mono font-bold text-amber-400 bg-slate-950 px-2 py-0.5 rounded">2200 Ω</span>
+                        </div>
+                        <input type="range" id="r3-slider" min="50" max="3000" step="10" value="2200" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400">
+                        <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                            <span>50 Ω</span>
+                            <span>3.0 kΩ</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel de Conductancias & Tensión Nodal -->
+            <div class="glass-panel p-5 rounded-2xl space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                    <span>⚡</span> Métricas de Red & Conductancia
+                </h3>
+                <div class="space-y-2 text-xs font-mono">
+                    <div class="flex justify-between items-center p-2 rounded-lg bg-slate-900/60 border border-slate-800/80">
+                        <span class="text-slate-400">Conductancia Total (G_total):</span>
+                        <span id="val-gtotal" class="font-bold text-purple-400">3.416 mS</span>
+                    </div>
+                    <div class="flex justify-between items-center p-2 rounded-lg bg-slate-900/60 border border-slate-800/80">
+                        <span class="text-slate-400">Resistencia Paralelo Equivalente (R_p):</span>
+                        <span id="val-rp" class="font-bold text-sky-400">292.8 Ω</span>
+                    </div>
+                    <div class="flex justify-between items-center p-2 rounded-lg bg-slate-900/60 border border-slate-800/80">
+                        <span class="text-slate-400">Tensión Común del Nodo (V_p = I_T · R_p):</span>
+                        <span id="val-vp" class="font-bold text-emerald-400">3.51 V</span>
+                    </div>
+                    <div class="flex justify-between items-center p-2.5 rounded-lg bg-purple-950/40 border border-purple-800/50">
+                        <span class="text-purple-300 font-bold">Verificación LCK (Σ I_ramas):</span>
+                        <span id="val-lck-sum" class="text-sm font-extrabold text-purple-400">12.00 mA (100.0%)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Visual & Results Column (Right, 7 cols) -->
+        <section class="lg:col-span-7 space-y-5">
+
+            <!-- Interactive Schematic SVG -->
+            <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-xs font-bold uppercase tracking-wide text-purple-400 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                        Esquema con Telemetría de Corrientes de Rama
+                    </h2>
+                    <span class="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">Actualización en vivo</span>
+                </div>
+
+                <!-- SVG Canvas -->
+                <div class="w-full bg-slate-950/90 rounded-xl border border-slate-800 p-2 sm:p-4 overflow-x-auto">
+                    <svg viewBox="0 0 540 280" class="w-full h-auto max-w-[540px] mx-auto text-xs font-mono select-none">
+                        <defs>
+                            <marker id="arr-purple" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#c084fc" />
+                            </marker>
+                            <marker id="arr-sky" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
+                            </marker>
+                            <marker id="arr-emerald" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#34d399" />
+                            </marker>
+                            <marker id="arr-amber" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#fbbf24" />
+                            </marker>
+                        </defs>
+
+                        <!-- Rails -->
+                        <!-- Top Rail (Node Vp) -->
+                        <line x1="60" y1="45" x2="480" y2="45" stroke="#94a3b8" stroke-width="3" />
+                        <circle cx="60" cy="45" r="5" fill="#c084fc" />
+                        <rect x="220" y="15" width="100" height="22" rx="4" fill="#581c87" />
+                        <text x="270" y="30" text-anchor="middle" fill="#f3e8ff" font-weight="bold" font-size="10">Nodo V_p</text>
+                        <text id="svg-vp-badge" x="330" y="30" fill="#c084fc" font-size="11" font-weight="bold">3.51 V</text>
+
+                        <!-- Bottom Rail (GND) -->
+                        <line x1="60" y1="235" x2="480" y2="235" stroke="#475569" stroke-width="3" />
+                        <!-- Ground symbol -->
+                        <line x1="270" y1="235" x2="270" y2="250" stroke="#64748b" stroke-width="2" />
+                        <line x1="258" y1="250" x2="282" y2="250" stroke="#64748b" stroke-width="2" />
+                        <line x1="263" y1="256" x2="277" y2="256" stroke="#64748b" stroke-width="2" />
+                        <line x1="267" y1="262" x2="273" y2="262" stroke="#64748b" stroke-width="2" />
+                        <text x="286" y="255" fill="#64748b" font-size="10">GND (0 V)</text>
+
+                        <!-- Current Source (Left branch) -->
+                        <line x1="60" y1="235" x2="60" y2="155" stroke="#475569" stroke-width="2.5" />
+                        <circle cx="60" cy="140" r="18" fill="#0f172a" stroke="#c084fc" stroke-width="2.5" />
+                        <!-- Up Arrow inside source circle -->
+                        <line x1="60" y1="150" x2="60" y2="128" stroke="#c084fc" stroke-width="2.5" marker-end="url(#arr-purple)" />
+                        <line x1="60" y1="122" x2="60" y2="45" stroke="#c084fc" stroke-width="2.5" />
+                        <text x="60" y="105" text-anchor="middle" fill="#c084fc" font-weight="bold" font-size="10">I_total</text>
+                        <text id="svg-itotal-txt" x="60" y="176" text-anchor="middle" fill="#c084fc" font-size="11" font-weight="bold">12.0 mA</text>
+
+                        <!-- Branch 1 (R1) -->
+                        <line x1="170" y1="45" x2="170" y2="90" stroke="#38bdf8" stroke-width="2.5" />
+                        <line x1="180" y1="58" x2="180" y2="82" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#arr-sky)" />
+                        <text id="svg-i1-txt" x="215" y="73" fill="#38bdf8" font-size="9">7.48 mA</text>
+                        
+                        <rect x="160" y="90" width="20" height="55" rx="3" fill="#1e293b" stroke="#38bdf8" stroke-width="2" />
+                        <text x="170" y="122" text-anchor="middle" fill="#38bdf8" font-weight="bold" font-size="10">R₁</text>
+                        <text id="svg-r1-txt" x="170" y="162" text-anchor="middle" fill="#94a3b8" font-size="9">470 Ω</text>
+                        <line x1="170" y1="145" x2="170" y2="235" stroke="#475569" stroke-width="2.5" />
+
+                        <!-- Branch 2 (R2) -->
+                        <line x1="310" y1="45" x2="310" y2="90" stroke="#34d399" stroke-width="2.5" />
+                        <line x1="320" y1="58" x2="320" y2="82" stroke="#34d399" stroke-width="1.5" marker-end="url(#arr-emerald)" />
+                        <text id="svg-i2-txt" x="355" y="73" fill="#34d399" font-size="9">2.93 mA</text>
+
+                        <rect x="300" y="90" width="20" height="55" rx="3" fill="#1e293b" stroke="#34d399" stroke-width="2" />
+                        <text x="310" y="122" text-anchor="middle" fill="#34d399" font-weight="bold" font-size="10">R₂</text>
+                        <text id="svg-r2-txt" x="310" y="162" text-anchor="middle" fill="#94a3b8" font-size="9">1.2 kΩ</text>
+                        <line x1="310" y1="145" x2="310" y2="235" stroke="#475569" stroke-width="2.5" />
+
+                        <!-- Branch 3 (R3) -->
+                        <g id="svg-r3-group">
+                            <line x1="440" y1="45" x2="440" y2="90" stroke="#fbbf24" stroke-width="2.5" />
+                            <line x1="450" y1="58" x2="450" y2="82" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arr-amber)" />
+                            <text id="svg-i3-txt" x="485" y="73" fill="#fbbf24" font-size="9">1.60 mA</text>
+
+                            <rect x="430" y="90" width="20" height="55" rx="3" fill="#1e293b" stroke="#fbbf24" stroke-width="2" />
+                            <text x="440" y="122" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="10">R₃</text>
+                            <text id="svg-r3-txt" x="440" y="162" text-anchor="middle" fill="#94a3b8" font-size="9">2.2 kΩ</text>
+                            <line x1="440" y1="145" x2="440" y2="235" stroke="#475569" stroke-width="2.5" />
+                        </g>
+
+                        <!-- Branch 3 Open Indicator -->
+                        <g id="svg-r3-disconnected" class="hidden">
+                            <line x1="440" y1="45" x2="440" y2="70" stroke="#475569" stroke-width="2.5" />
+                            <circle cx="440" cy="70" r="3" fill="#ef4444" />
+                            <circle cx="440" cy="95" r="3" fill="#ef4444" />
+                            <line x1="440" y1="70" x2="455" y2="85" stroke="#ef4444" stroke-width="2.5" />
+                            <text x="440" y="130" text-anchor="middle" fill="#64748b" font-style="italic" font-size="10">Rama 3 Abierta</text>
+                            <text x="440" y="145" text-anchor="middle" fill="#64748b" font-style="italic" font-size="9">(I₃ = 0 mA)</text>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Branch Telemetry Cards -->
+            <div class="grid grid-cols-3 gap-3">
+                <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-sky-500">
+                    <div class="flex justify-between items-start">
+                        <span class="text-[11px] text-slate-400 block">Rama 1 (R₁)</span>
+                        <span id="badge-pct-i1" class="text-[10px] font-mono bg-sky-950/80 text-sky-300 px-1.5 py-0.5 rounded border border-sky-800/40">62.3%</span>
+                    </div>
+                    <span id="card-i1" class="text-base sm:text-lg font-bold font-mono text-sky-400 mt-1 block">7.48 mA</span>
+                    <span id="card-p1" class="text-[10px] text-slate-500 block mt-0.5">P₁ = 26.3 mW</span>
+                </div>
+
+                <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-emerald-500">
+                    <div class="flex justify-between items-start">
+                        <span class="text-[11px] text-slate-400 block">Rama 2 (R₂)</span>
+                        <span id="badge-pct-i2" class="text-[10px] font-mono bg-emerald-950/80 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-800/40">24.4%</span>
+                    </div>
+                    <span id="card-i2" class="text-base sm:text-lg font-bold font-mono text-emerald-400 mt-1 block">2.93 mA</span>
+                    <span id="card-p2" class="text-[10px] text-slate-500 block mt-0.5">P₂ = 10.3 mW</span>
+                </div>
+
+                <div id="card-branch3-box" class="glass-panel p-3.5 rounded-xl border-l-4 border-l-amber-500">
+                    <div class="flex justify-between items-start">
+                        <span class="text-[11px] text-slate-400 block">Rama 3 (R₃)</span>
+                        <span id="badge-pct-i3" class="text-[10px] font-mono bg-amber-950/80 text-amber-300 px-1.5 py-0.5 rounded border border-amber-800/40">13.3%</span>
+                    </div>
+                    <span id="card-i3" class="text-base sm:text-lg font-bold font-mono text-amber-400 mt-1 block">1.60 mA</span>
+                    <span id="card-p3" class="text-[10px] text-slate-500 block mt-0.5">P₃ = 5.6 mW</span>
+                </div>
+            </div>
+
+            <!-- Proportional Distribution Bar & Engineering Takeaway -->
+            <div class="glass-panel p-5 rounded-2xl space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                        <span>📈</span> Distribución Porcentual del Caudal de Corriente
+                    </h3>
+                    <span class="text-xs font-mono text-slate-400">Total: 100% (LCK)</span>
+                </div>
+
+                <!-- Multi-segment Progress Bar -->
+                <div class="w-full bg-slate-800 rounded-full h-4 overflow-hidden flex shadow-inner">
+                    <div id="bar-i1" class="bg-sky-400 h-full transition-all duration-300 flex items-center justify-center text-[10px] font-bold text-slate-950" style="width: 62.3%">
+                        <span class="truncate px-1">I₁ (62%)</span>
+                    </div>
+                    <div id="bar-i2" class="bg-emerald-400 h-full transition-all duration-300 flex items-center justify-center text-[10px] font-bold text-slate-950" style="width: 24.4%">
+                        <span class="truncate px-1">I₂ (24%)</span>
+                    </div>
+                    <div id="bar-i3" class="bg-amber-400 h-full transition-all duration-300 flex items-center justify-center text-[10px] font-bold text-slate-950" style="width: 13.3%">
+                        <span class="truncate px-1">I₃ (13%)</span>
+                    </div>
+                </div>
+
+                <!-- Engineering Insight -->
+                <div class="p-3.5 rounded-xl bg-slate-900/90 border border-purple-500/30 text-xs space-y-1.5">
+                    <div class="flex items-center gap-2 text-purple-300 font-semibold">
+                        <span class="text-base">💡</span>
+                        <span>Principio de la Menor Resistencia:</span>
+                    </div>
+                    <p id="insight-text" class="text-slate-400 leading-relaxed">
+                        Observa cómo la rama $R_1 = 470\,\Omega$ drena la mayor corriente ($62.3\%$). Al reducir cualquier resistencia, esta rama "absorbe" la corriente de las demás ramas sin cambiar la corriente total suministrada por la fuente. Este principio es la base de las protecciones con derivador (*shunt*) y del balance en etapas diferenciales.
+                    </p>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto w-full mt-6 text-center text-xs text-slate-500 py-3 border-t border-slate-900">
+        <p>Circuitos Eléctricos I & II • Cátedra de Mecatrónica • Repaso Intensivo</p>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        // DOM Elements
+        const itotalSlider = document.getElementById('itotal-slider');
+        const r1Slider = document.getElementById('r1-slider');
+        const r2Slider = document.getElementById('r2-slider');
+        const r3Slider = document.getElementById('r3-slider');
+        const r3Connected = document.getElementById('r3-connected');
+        const btnPresetEjercicio = document.getElementById('btn-preset-ejercicio');
+
+        // Labels
+        const itotalVal = document.getElementById('itotal-val');
+        const r1Val = document.getElementById('r1-val');
+        const r2Val = document.getElementById('r2-val');
+        const r3Val = document.getElementById('r3-val');
+        const r3StatusLabel = document.getElementById('r3-status-label');
+        const r3SliderContainer = document.getElementById('r3-slider-container');
+        const headerLckStatus = document.getElementById('header-lck-status');
+
+        // Telemetry values
+        const valGtotal = document.getElementById('val-gtotal');
+        const valRp = document.getElementById('val-rp');
+        const valVp = document.getElementById('val-vp');
+        const valLckSum = document.getElementById('val-lck-sum');
+
+        // SVG Elements
+        const svgVpBadge = document.getElementById('svg-vp-badge');
+        const svgItotalTxt = document.getElementById('svg-itotal-txt');
+        const svgI1Txt = document.getElementById('svg-i1-txt');
+        const svgR1Txt = document.getElementById('svg-r1-txt');
+        const svgI2Txt = document.getElementById('svg-i2-txt');
+        const svgR2Txt = document.getElementById('svg-r2-txt');
+        const svgI3Txt = document.getElementById('svg-i3-txt');
+        const svgR3Txt = document.getElementById('svg-r3-txt');
+        const svgR3Group = document.getElementById('svg-r3-group');
+        const svgR3Disconnected = document.getElementById('svg-r3-disconnected');
+
+        // Cards & Badges
+        const cardI1 = document.getElementById('card-i1');
+        const cardP1 = document.getElementById('card-p1');
+        const badgePctI1 = document.getElementById('badge-pct-i1');
+
+        const cardI2 = document.getElementById('card-i2');
+        const cardP2 = document.getElementById('card-p2');
+        const badgePctI2 = document.getElementById('badge-pct-i2');
+
+        const cardBranch3Box = document.getElementById('card-branch3-box');
+        const cardI3 = document.getElementById('card-i3');
+        const cardP3 = document.getElementById('card-p3');
+        const badgePctI3 = document.getElementById('badge-pct-i3');
+
+        // Bars
+        const barI1 = document.getElementById('bar-i1');
+        const barI2 = document.getElementById('bar-i2');
+        const barI3 = document.getElementById('bar-i3');
+        const insightText = document.getElementById('insight-text');
+
+        function updateSimulation() {
+            const Itotal_mA = parseFloat(itotalSlider.value);
+            const Itotal = Itotal_mA / 1000; // Amperes
+            const R1 = parseFloat(r1Slider.value);
+            const R2 = parseFloat(r2Slider.value);
+            const isR3On = r3Connected.checked;
+            const R3 = parseFloat(r3Slider.value);
+
+            // Update Labels
+            itotalVal.textContent = Itotal_mA.toFixed(1) + ' mA';
+            r1Val.textContent = R1 >= 1000 ? (R1/1000).toFixed(2) + ' kΩ' : R1.toFixed(0) + ' Ω';
+            r2Val.textContent = R2 >= 1000 ? (R2/1000).toFixed(2) + ' kΩ' : R2.toFixed(0) + ' Ω';
+            r3Val.textContent = R3 >= 1000 ? (R3/1000).toFixed(2) + ' kΩ' : R3.toFixed(0) + ' Ω';
+
+            if (isR3On) {
+                r3StatusLabel.textContent = 'Conectada';
+                r3StatusLabel.className = 'ml-2 text-[11px] font-semibold text-amber-400';
+                r3SliderContainer.classList.remove('opacity-40', 'pointer-events-none');
+                svgR3Group.classList.remove('hidden');
+                svgR3Disconnected.classList.add('hidden');
+                cardBranch3Box.classList.remove('opacity-40');
+                barI3.classList.remove('hidden');
+            } else {
+                r3StatusLabel.textContent = 'Desconectada (Abierto)';
+                r3StatusLabel.className = 'ml-2 text-[11px] font-semibold text-slate-500';
+                r3SliderContainer.classList.add('opacity-40', 'pointer-events-none');
+                svgR3Group.classList.add('hidden');
+                svgR3Disconnected.classList.remove('hidden');
+                cardBranch3Box.classList.add('opacity-40');
+                barI3.classList.add('hidden');
+            }
+
+            // Conductances (Siemens)
+            const G1 = 1 / R1;
+            const G2 = 1 / R2;
+            const G3 = isR3On ? (1 / R3) : 0;
+            const G_total = G1 + G2 + G3;
+
+            // Equivalent Resistance & Node Voltage
+            const R_p = 1 / G_total;
+            const V_p = Itotal * R_p; // Volts
+
+            // Branch currents
+            const I1 = V_p / R1; // Amperes
+            const I2 = V_p / R2; // Amperes
+            const I3 = isR3On ? (V_p / R3) : 0; // Amperes
+            const I_sum = I1 + I2 + I3;
+
+            // Percentages
+            const pct1 = (I1 / Itotal) * 100;
+            const pct2 = (I2 / Itotal) * 100;
+            const pct3 = isR3On ? (I3 / Itotal) * 100 : 0;
+
+            // Powers (mW)
+            const P1 = (I1 * I1 * R1) * 1000;
+            const P2 = (I2 * I2 * R2) * 1000;
+            const P3 = isR3On ? (I3 * I3 * R3) * 1000 : 0;
+
+            // Update Header & Telemetry Values
+            headerLckStatus.textContent = `${(I_sum * 1000).toFixed(2)} mA = ${Itotal_mA.toFixed(2)} mA`;
+            valGtotal.textContent = (G_total * 1000).toFixed(3) + ' mS';
+            valRp.textContent = R_p >= 1000 ? (R_p / 1000).toFixed(3) + ' kΩ' : R_p.toFixed(1) + ' Ω';
+            valVp.textContent = V_p.toFixed(2) + ' V';
+            valLckSum.textContent = `${(I_sum * 1000).toFixed(2)} mA (${((I_sum/Itotal)*100).toFixed(1)}%)`;
+
+            // Update SVG
+            svgVpBadge.textContent = V_p.toFixed(2) + ' V';
+            svgItotalTxt.textContent = Itotal_mA.toFixed(1) + ' mA';
+            svgR1Txt.textContent = R1 >= 1000 ? (R1/1000).toFixed(1) + 'k' : R1.toFixed(0) + 'Ω';
+            svgR2Txt.textContent = R2 >= 1000 ? (R2/1000).toFixed(1) + 'k' : R2.toFixed(0) + 'Ω';
+            svgR3Txt.textContent = R3 >= 1000 ? (R3/1000).toFixed(1) + 'k' : R3.toFixed(0) + 'Ω';
+
+            svgI1Txt.textContent = (I1 * 1000).toFixed(2) + ' mA';
+            svgI2Txt.textContent = (I2 * 1000).toFixed(2) + ' mA';
+            svgI3Txt.textContent = (I3 * 1000).toFixed(2) + ' mA';
+
+            // Update Cards
+            cardI1.textContent = (I1 * 1000).toFixed(2) + ' mA';
+            cardP1.textContent = `P₁ = ${P1.toFixed(1)} mW`;
+            badgePctI1.textContent = pct1.toFixed(1) + '%';
+
+            cardI2.textContent = (I2 * 1000).toFixed(2) + ' mA';
+            cardP2.textContent = `P₂ = ${P2.toFixed(1)} mW`;
+            badgePctI2.textContent = pct2.toFixed(1) + '%';
+
+            cardI3.textContent = isR3On ? (I3 * 1000).toFixed(2) + ' mA' : '0.00 mA';
+            cardP3.textContent = isR3On ? `P₃ = ${P3.toFixed(1)} mW` : 'P₃ = 0.0 mW';
+            badgePctI3.textContent = isR3On ? pct3.toFixed(1) + '%' : '0.0%';
+
+            // Update Progress Bar
+            barI1.style.width = pct1.toFixed(1) + '%';
+            barI1.innerHTML = `<span class="truncate px-1">I₁ (${pct1.toFixed(0)}%)</span>`;
+
+            barI2.style.width = pct2.toFixed(1) + '%';
+            barI2.innerHTML = `<span class="truncate px-1">I₂ (${pct2.toFixed(0)}%)</span>`;
+
+            if (isR3On) {
+                barI3.style.width = pct3.toFixed(1) + '%';
+                barI3.innerHTML = `<span class="truncate px-1">I₃ (${pct3.toFixed(0)}%)</span>`;
+            }
+
+            // Insight description
+            const minR = Math.min(R1, R2, isR3On ? R3 : Infinity);
+            let minName = "R₁";
+            if (minR === R2) minName = "R₂";
+            if (isR3On && minR === R3) minName = "R₃";
+
+            insightText.innerHTML = `La rama de menor resistencia es <strong>${minName} (${minR.toFixed(0)}\\,\\Omega)</strong>, la cual conduce la mayor proporción de corriente (<strong class="text-white">${Math.max(pct1, pct2, pct3).toFixed(1)}%</strong>). La tensión común del nodo se establece en <strong class="text-emerald-400">${V_p.toFixed(2)}\\text{ V}</strong>.`;
+        }
+
+        // Event Listeners
+        [itotalSlider, r1Slider, r2Slider, r3Slider].forEach(slider => {
+            slider.addEventListener('input', updateSimulation);
+        });
+
+        r3Connected.addEventListener('change', updateSimulation);
+
+        btnPresetEjercicio.addEventListener('click', () => {
+            itotalSlider.value = 12;
+            r1Slider.value = 470;
+            r2Slider.value = 1200;
+            r3Slider.value = 2200;
+            r3Connected.checked = true;
+            updateSimulation();
+        });
+
+        // Initialize
+        updateSimulation();
+    </script>
+</body>
+</html>

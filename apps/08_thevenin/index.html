@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Teorema de Thévenin & Equivalencia</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'Fira Code', monospace; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-3 sm:p-6 flex flex-col justify-between selection:bg-sky-500 selection:text-white">
+
+    <!-- Top Header -->
+    <header class="max-w-7xl mx-auto w-full mb-6 glass-panel rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/25">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                </svg>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[11px] font-mono uppercase tracking-wider text-sky-400 font-bold bg-sky-950/60 px-2 py-0.5 rounded border border-sky-800/40">Día 3 • Lección 1</span>
+                    <span class="text-xs text-slate-400">Circuitos Eléctricos I & II</span>
+                </div>
+                <h1 class="text-lg sm:text-2xl font-bold text-white leading-tight">Teorema de Thévenin: Circuito Original vs Modelo Equivalente</h1>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <div class="bg-slate-900 border border-emerald-500/40 px-3 py-1.5 rounded-xl flex items-center gap-2 text-emerald-300">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-xs font-semibold">Equivalencia: <strong id="header-match-status">100.0% Idéntica</strong></span>
+            </div>
+            <a href="../../index.html" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 border border-slate-700 transition-colors">
+                ← Portal
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Grid -->
+    <main class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+
+        <!-- Controls Column (Left, 5 cols) -->
+        <section class="lg:col-span-5 space-y-5">
+            <div class="glass-panel p-5 rounded-2xl space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                    <h2 class="text-sm font-bold text-sky-400 uppercase tracking-wide flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                        Parámetros del Circuito Original
+                    </h2>
+                    <button id="btn-preset-ejercicio" class="text-xs text-sky-400 hover:text-sky-300 underline font-medium">Valores del Ejercicio</button>
+                </div>
+
+                <!-- Vs Slider -->
+                <div>
+                    <div class="flex justify-between items-center text-xs mb-1.5">
+                        <label class="text-slate-300 font-medium">Fuente de Tensión <span class="text-sky-400 font-bold">(V_s)</span></label>
+                        <span id="vs-val" class="font-mono font-bold text-sky-400 bg-slate-900 px-2 py-0.5 rounded">20.0 V</span>
+                    </div>
+                    <input type="range" id="vs-slider" min="5" max="30" step="0.5" value="20" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-400">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                        <span>5.0 V</span>
+                        <span>30.0 V</span>
+                    </div>
+                </div>
+
+                <!-- R1 Slider -->
+                <div>
+                    <div class="flex justify-between items-center text-xs mb-1.5">
+                        <label class="text-slate-300 font-medium">Resistencia Serie <span class="text-amber-400 font-bold">(R₁)</span></label>
+                        <span id="r1-val" class="font-mono font-bold text-amber-400 bg-slate-900 px-2 py-0.5 rounded">1000 Ω</span>
+                    </div>
+                    <input type="range" id="r1-slider" min="200" max="5000" step="50" value="1000" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                        <span>200 Ω</span>
+                        <span>5.0 kΩ</span>
+                    </div>
+                </div>
+
+                <!-- R2 Slider -->
+                <div>
+                    <div class="flex justify-between items-center text-xs mb-1.5">
+                        <label class="text-slate-300 font-medium">Resistencia Shunt <span class="text-emerald-400 font-bold">(R₂)</span></label>
+                        <span id="r2-val" class="font-mono font-bold text-emerald-400 bg-slate-900 px-2 py-0.5 rounded">2200 Ω</span>
+                    </div>
+                    <input type="range" id="r2-slider" min="500" max="10000" step="100" value="2200" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-400">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                        <span>500 Ω</span>
+                        <span>10.0 kΩ</span>
+                    </div>
+                </div>
+
+                <!-- R3 Slider -->
+                <div>
+                    <div class="flex justify-between items-center text-xs mb-1.5">
+                        <label class="text-slate-300 font-medium">Resistencia de Salida <span class="text-indigo-400 font-bold">(R₃)</span></label>
+                        <span id="r3-val" class="font-mono font-bold text-indigo-400 bg-slate-900 px-2 py-0.5 rounded">470 Ω</span>
+                    </div>
+                    <input type="range" id="r3-slider" min="50" max="2000" step="10" value="470" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-400">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                        <span>50 Ω</span>
+                        <span>2.0 kΩ</span>
+                    </div>
+                </div>
+
+                <!-- RL Toggle & Slider -->
+                <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                            <label for="rl-connected" class="text-xs font-bold text-rose-300">Resistencia de Carga (R_L)</label>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="rl-connected" class="sr-only peer" checked>
+                            <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rose-500"></div>
+                            <span id="rl-status-label" class="ml-2 text-[11px] font-semibold text-rose-400">Conectada</span>
+                        </label>
+                    </div>
+
+                    <div id="rl-slider-container">
+                        <div class="flex justify-between items-center text-xs mb-1">
+                            <span class="text-slate-400 text-[11px]">Valor de Carga R_L:</span>
+                            <span id="rl-val" class="font-mono font-bold text-rose-400 bg-slate-950 px-2 py-0.5 rounded">1000 Ω</span>
+                        </div>
+                        <input type="range" id="rl-slider" min="100" max="5000" step="50" value="1000" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-400">
+                        <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                            <span>100 Ω</span>
+                            <span>5.0 kΩ</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parámetros Calculados de Thévenin -->
+            <div class="glass-panel p-5 rounded-2xl space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                    <span>⚡</span> Parámetros del Equivalente Thévenin (A-B)
+                </h3>
+                <div class="space-y-2 text-xs font-mono">
+                    <div class="flex justify-between items-center p-2 rounded-lg bg-sky-950/40 border border-sky-800/50">
+                        <span class="text-sky-300 font-bold">1. Voltaje Thévenin (V_TH = V_oc):</span>
+                        <span id="calc-vth" class="font-extrabold text-sky-400 text-sm">13.75 V</span>
+                    </div>
+                    <div class="flex justify-between items-center p-2 rounded-lg bg-indigo-950/40 border border-indigo-800/50">
+                        <span class="text-indigo-300 font-bold">2. Resistencia Thévenin (R_TH):</span>
+                        <span id="calc-rth" class="font-extrabold text-indigo-400 text-sm">1157.5 Ω</span>
+                    </div>
+                    <div class="flex justify-between items-center p-2 rounded-lg bg-slate-900/60 border border-slate-800/80">
+                        <span class="text-slate-400">R₁ ∥ R₂ (fuente apagada):</span>
+                        <span id="calc-r12" class="font-bold text-slate-300">687.5 Ω</span>
+                    </div>
+                    <div class="flex justify-between items-center p-2 rounded-lg bg-slate-900/60 border border-slate-800/80">
+                        <span class="text-slate-400">Corriente de Cortocircuito (I_sc):</span>
+                        <span id="calc-isc" class="font-bold text-amber-400">11.88 mA</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Visual & Results Column (Right, 7 cols) -->
+        <section class="lg:col-span-7 space-y-5">
+
+            <!-- Side-by-side Circuit Diagrams -->
+            <div class="glass-panel p-5 rounded-2xl space-y-4">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                    <h2 class="text-xs font-bold uppercase tracking-wide text-sky-400 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        Comparativa de Circuitos en Tiempo Real
+                    </h2>
+                    <span class="text-[10px] text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40">Respuesta idéntica en carga</span>
+                </div>
+
+                <!-- SVG Diagrams Container -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    
+                    <!-- Circuito Original SVG -->
+                    <div class="bg-slate-950/90 rounded-xl border border-slate-800 p-2.5">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block text-center mb-1">Circuito Original Completo</span>
+                        <svg viewBox="0 0 260 170" class="w-full h-auto text-xs font-mono select-none">
+                            <defs>
+                                <marker id="th-arr-sky" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
+                                </marker>
+                            </defs>
+                            <!-- Ground -->
+                            <line x1="20" y1="140" x2="240" y2="140" stroke="#475569" stroke-width="2" />
+                            <text x="130" y="155" text-anchor="middle" fill="#64748b" font-size="8">GND (Terminal B)</text>
+
+                            <!-- Vs -->
+                            <line x1="25" y1="140" x2="25" y2="95" stroke="#475569" stroke-width="2" />
+                            <circle cx="25" cy="85" r="11" fill="#0f172a" stroke="#38bdf8" stroke-width="2" />
+                            <text x="25" y="88" text-anchor="middle" fill="#38bdf8" font-size="9" font-weight="bold">Vs</text>
+                            <line x1="25" y1="74" x2="25" y2="35" stroke="#38bdf8" stroke-width="2" />
+                            <text id="svg-orig-vs" x="25" y="25" text-anchor="middle" fill="#38bdf8" font-size="8">20 V</text>
+
+                            <!-- R1 -->
+                            <line x1="25" y1="35" x2="60" y2="35" stroke="#38bdf8" stroke-width="2" />
+                            <rect x="60" y="28" width="30" height="14" rx="2" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5" />
+                            <text x="75" y="39" text-anchor="middle" fill="#fbbf24" font-size="8">R₁</text>
+                            <line x1="90" y1="35" x2="130" y2="35" stroke="#94a3b8" stroke-width="2" />
+
+                            <!-- R2 -->
+                            <circle cx="130" cy="35" r="3" fill="#34d399" />
+                            <line x1="130" y1="35" x2="130" y2="65" stroke="#34d399" stroke-width="2" />
+                            <rect x="123" y="65" width="14" height="30" rx="2" fill="#1e293b" stroke="#34d399" stroke-width="1.5" />
+                            <text x="130" y="83" text-anchor="middle" fill="#34d399" font-size="8">R₂</text>
+                            <line x1="130" y1="95" x2="130" y2="140" stroke="#475569" stroke-width="2" />
+
+                            <!-- R3 -->
+                            <line x1="130" y1="35" x2="165" y2="35" stroke="#818cf8" stroke-width="2" />
+                            <rect x="165" y="28" width="30" height="14" rx="2" fill="#1e293b" stroke="#818cf8" stroke-width="1.5" />
+                            <text x="180" y="39" text-anchor="middle" fill="#a5b4fc" font-size="8">R₃</text>
+                            <line x1="195" y1="35" x2="225" y2="35" stroke="#94a3b8" stroke-width="2" />
+
+                            <!-- Terminal A -->
+                            <circle cx="225" cy="35" r="3" fill="#fb7185" />
+                            <text x="240" y="32" fill="#fb7185" font-weight="bold" font-size="8">A</text>
+
+                            <!-- RL Branch -->
+                            <g id="svg-orig-rl-group">
+                                <line x1="225" y1="35" x2="225" y2="65" stroke="#fb7185" stroke-width="2" />
+                                <rect x="218" y="65" width="14" height="30" rx="2" fill="#1e293b" stroke="#fb7185" stroke-width="1.5" />
+                                <text x="225" y="83" text-anchor="middle" fill="#fb7185" font-size="8">RL</text>
+                                <line x1="225" y1="95" x2="225" y2="140" stroke="#475569" stroke-width="2" />
+                            </g>
+                            <g id="svg-orig-rl-open" class="hidden">
+                                <circle cx="225" cy="45" r="2.5" fill="#ef4444" />
+                                <circle cx="225" cy="65" r="2.5" fill="#ef4444" />
+                                <text x="225" y="90" text-anchor="middle" fill="#64748b" font-size="7">Abierto</text>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <!-- Circuito Thévenin SVG -->
+                    <div class="bg-slate-950/90 rounded-xl border border-sky-900/40 p-2.5">
+                        <span class="text-[10px] uppercase font-bold text-sky-400 tracking-wider block text-center mb-1">Equivalente Thévenin (1 Malla)</span>
+                        <svg viewBox="0 0 260 170" class="w-full h-auto text-xs font-mono select-none">
+                            <!-- Ground -->
+                            <line x1="30" y1="140" x2="230" y2="140" stroke="#475569" stroke-width="2" />
+                            <text x="130" y="155" text-anchor="middle" fill="#64748b" font-size="8">Terminal B (0 V)</text>
+
+                            <!-- V_TH -->
+                            <line x1="40" y1="140" x2="40" y2="95" stroke="#475569" stroke-width="2" />
+                            <circle cx="40" cy="85" r="11" fill="#0f172a" stroke="#38bdf8" stroke-width="2" />
+                            <text x="40" y="88" text-anchor="middle" fill="#38bdf8" font-size="8" font-weight="bold">Vth</text>
+                            <line x1="40" y1="74" x2="40" y2="35" stroke="#38bdf8" stroke-width="2" />
+                            <text id="svg-th-vth" x="40" y="25" text-anchor="middle" fill="#38bdf8" font-size="8">13.75 V</text>
+
+                            <!-- R_TH -->
+                            <line x1="40" y1="35" x2="100" y2="35" stroke="#38bdf8" stroke-width="2" />
+                            <rect x="100" y="28" width="45" height="14" rx="2" fill="#1e293b" stroke="#818cf8" stroke-width="1.5" />
+                            <text x="122" y="39" text-anchor="middle" fill="#a5b4fc" font-size="8">R_TH</text>
+                            <line x1="145" y1="35" x2="200" y2="35" stroke="#94a3b8" stroke-width="2" />
+
+                            <!-- Terminal A -->
+                            <circle cx="200" cy="35" r="3" fill="#fb7185" />
+                            <text x="215" y="32" fill="#fb7185" font-weight="bold" font-size="8">A</text>
+
+                            <!-- RL Branch -->
+                            <g id="svg-th-rl-group">
+                                <line x1="200" y1="35" x2="200" y2="65" stroke="#fb7185" stroke-width="2" />
+                                <rect x="193" y="65" width="14" height="30" rx="2" fill="#1e293b" stroke="#fb7185" stroke-width="1.5" />
+                                <text x="200" y="83" text-anchor="middle" fill="#fb7185" font-size="8">RL</text>
+                                <line x1="200" y1="95" x2="200" y2="140" stroke="#475569" stroke-width="2" />
+                            </g>
+                            <g id="svg-th-rl-open" class="hidden">
+                                <circle cx="200" cy="45" r="2.5" fill="#ef4444" />
+                                <circle cx="200" cy="65" r="2.5" fill="#ef4444" />
+                                <text x="200" y="90" text-anchor="middle" fill="#64748b" font-size="7">Abierto</text>
+                            </g>
+                        </svg>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Identical Response Telemetry Cards -->
+            <div class="grid grid-cols-3 gap-3">
+                <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-rose-500">
+                    <span class="text-[11px] text-slate-400 block">Tensión en Carga (V_L)</span>
+                    <span id="card-vl" class="text-base sm:text-lg font-bold font-mono text-rose-400 block mt-0.5">6.37 V</span>
+                    <div class="text-[10px] text-slate-500 flex justify-between mt-0.5">
+                        <span>Orig: <strong id="card-orig-vl" class="text-slate-400">6.37 V</strong></span>
+                        <span>Thév: <strong id="card-th-vl" class="text-slate-400">6.37 V</strong></span>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-amber-500">
+                    <span class="text-[11px] text-slate-400 block">Corriente en Carga (I_L)</span>
+                    <span id="card-il" class="text-base sm:text-lg font-bold font-mono text-amber-400 block mt-0.5">6.37 mA</span>
+                    <div class="text-[10px] text-slate-500 flex justify-between mt-0.5">
+                        <span>Orig: <strong id="card-orig-il" class="text-slate-400">6.37 mA</strong></span>
+                        <span>Thév: <strong id="card-th-il" class="text-slate-400">6.37 mA</strong></span>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-emerald-500">
+                    <span class="text-[11px] text-slate-400 block">Potencia en Carga (P_L)</span>
+                    <span id="card-pl" class="text-base sm:text-lg font-bold font-mono text-emerald-400 block mt-0.5">40.6 mW</span>
+                    <div class="text-[10px] text-slate-500 flex justify-between mt-0.5">
+                        <span>Orig: <strong id="card-orig-pl" class="text-slate-400">40.6 mW</strong></span>
+                        <span>Thév: <strong id="card-th-pl" class="text-slate-400">40.6 mW</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Educational Insight -->
+            <div class="glass-panel p-4 sm:p-5 rounded-2xl space-y-2">
+                <div class="flex items-center gap-2 text-sky-400 font-semibold text-xs">
+                    <span>💡</span>
+                    <span>¿Por qué Thévenin revoluciona el análisis de circuitos?</span>
+                </div>
+                <p id="insight-text" class="text-slate-400 text-xs leading-relaxed">
+                    Mueve el slider de la carga $R_L$: calcular la corriente en el circuito original exige resolver ramas en paralelo y divisores sucesivos en cada paso. Con el equivalente de Thévenin, la carga $R_L$ queda en serie directa con $R_{TH}$, reduciendo cualquier cálculo a la simple división $I_L = V_{TH} / (R_{TH} + R_L)$.
+                </p>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto w-full mt-6 text-center text-xs text-slate-500 py-3 border-t border-slate-900">
+        <p>Circuitos Eléctricos I & II • Cátedra de Mecatrónica • Repaso Intensivo</p>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        // DOM Elements
+        const vsSlider = document.getElementById('vs-slider');
+        const r1Slider = document.getElementById('r1-slider');
+        const r2Slider = document.getElementById('r2-slider');
+        const r3Slider = document.getElementById('r3-slider');
+        const rlSlider = document.getElementById('rl-slider');
+        const rlConnected = document.getElementById('rl-connected');
+        const btnPresetEjercicio = document.getElementById('btn-preset-ejercicio');
+
+        // Labels
+        const vsVal = document.getElementById('vs-val');
+        const r1Val = document.getElementById('r1-val');
+        const r2Val = document.getElementById('r2-val');
+        const r3Val = document.getElementById('r3-val');
+        const rlVal = document.getElementById('rl-val');
+        const rlStatusLabel = document.getElementById('rl-status-label');
+        const rlSliderContainer = document.getElementById('rl-slider-container');
+
+        // Calculated Thévenin elements
+        const calcVth = document.getElementById('calc-vth');
+        const calcRth = document.getElementById('calc-rth');
+        const calcR12 = document.getElementById('calc-r12');
+        const calcIsc = document.getElementById('calc-isc');
+
+        // SVG elements
+        const svgOrigVs = document.getElementById('svg-orig-vs');
+        const svgThVth = document.getElementById('svg-th-vth');
+        const svgOrigRlGroup = document.getElementById('svg-orig-rl-group');
+        const svgOrigRlOpen = document.getElementById('svg-orig-rl-open');
+        const svgThRlGroup = document.getElementById('svg-th-rl-group');
+        const svgThRlOpen = document.getElementById('svg-th-rl-open');
+
+        // Telemetry cards
+        const cardVl = document.getElementById('card-vl');
+        const cardOrigVl = document.getElementById('card-orig-vl');
+        const cardThVl = document.getElementById('card-th-vl');
+
+        const cardIl = document.getElementById('card-il');
+        const cardOrigIl = document.getElementById('card-orig-il');
+        const cardThIl = document.getElementById('card-th-il');
+
+        const cardPl = document.getElementById('card-pl');
+        const cardOrigPl = document.getElementById('card-orig-pl');
+        const cardThPl = document.getElementById('card-th-pl');
+
+        function updateThevenin() {
+            const Vs = parseFloat(vsSlider.value);
+            const R1 = parseFloat(r1Slider.value);
+            const R2 = parseFloat(r2Slider.value);
+            const R3 = parseFloat(r3Slider.value);
+            const isRLOn = rlConnected.checked;
+            const RL = parseFloat(rlSlider.value);
+
+            // Update Labels
+            vsVal.textContent = Vs.toFixed(1) + ' V';
+            r1Val.textContent = R1 >= 1000 ? (R1/1000).toFixed(2) + ' kΩ' : R1.toFixed(0) + ' Ω';
+            r2Val.textContent = R2 >= 1000 ? (R2/1000).toFixed(2) + ' kΩ' : R2.toFixed(0) + ' Ω';
+            r3Val.textContent = R3 >= 1000 ? (R3/1000).toFixed(2) + ' kΩ' : R3.toFixed(0) + ' Ω';
+            rlVal.textContent = RL >= 1000 ? (RL/1000).toFixed(2) + ' kΩ' : RL.toFixed(0) + ' Ω';
+
+            if (isRLOn) {
+                rlStatusLabel.textContent = 'Conectada';
+                rlStatusLabel.className = 'ml-2 text-[11px] font-semibold text-rose-400';
+                rlSliderContainer.classList.remove('opacity-40', 'pointer-events-none');
+                svgOrigRlGroup.classList.remove('hidden');
+                svgOrigRlOpen.classList.add('hidden');
+                svgThRlGroup.classList.remove('hidden');
+                svgThRlOpen.classList.add('hidden');
+            } else {
+                rlStatusLabel.textContent = 'Desconectada (Vacío)';
+                rlStatusLabel.className = 'ml-2 text-[11px] font-semibold text-slate-500';
+                rlSliderContainer.classList.add('opacity-40', 'pointer-events-none');
+                svgOrigRlGroup.classList.add('hidden');
+                svgOrigRlOpen.classList.remove('hidden');
+                svgThRlGroup.classList.add('hidden');
+                svgThRlOpen.classList.remove('hidden');
+            }
+
+            // --- THÉVENIN DERIVATION ---
+            // 1. V_TH: Open circuit voltage across A-B
+            // Since terminals are open, I_R3 = 0, so V_TH is the voltage across R2
+            const V_TH = Vs * (R2 / (R1 + R2));
+
+            // 2. R_TH: Deactivate Vs (short circuit). R1 || R2 in series with R3
+            const R12_parallel = (R1 * R2) / (R1 + R2);
+            const R_TH = R3 + R12_parallel;
+
+            // 3. Short circuit current I_sc = V_TH / R_TH
+            const I_sc = V_TH / R_TH; // Amperes
+
+            // --- THÉVENIN PREDICTION FOR RL ---
+            let V_L_th = 0;
+            let I_L_th = 0;
+            let P_L_th = 0;
+
+            if (isRLOn) {
+                I_L_th = V_TH / (R_TH + RL); // Amperes
+                V_L_th = I_L_th * RL; // Volts
+                P_L_th = (I_L_th * I_L_th * RL) * 1000; // mW
+            } else {
+                V_L_th = V_TH;
+                I_L_th = 0;
+                P_L_th = 0;
+            }
+
+            // --- ORIGINAL CIRCUIT CALCULATION ---
+            let V_L_orig = 0;
+            let I_L_orig = 0;
+            let P_L_orig = 0;
+
+            if (isRLOn) {
+                const R_right = R3 + RL;
+                const R_parallel = (R2 * R_right) / (R2 + R_right);
+                const R_total_in = R1 + R_parallel;
+                const V_node = Vs * (R_parallel / R_total_in);
+                V_L_orig = V_node * (RL / R_right);
+                I_L_orig = V_L_orig / RL;
+                P_L_orig = (I_L_orig * I_L_orig * RL) * 1000;
+            } else {
+                V_L_orig = V_TH;
+                I_L_orig = 0;
+                P_L_orig = 0;
+            }
+
+            // Update Calculated Panel
+            calcVth.textContent = V_TH.toFixed(2) + ' V';
+            calcRth.textContent = R_TH >= 1000 ? (R_TH/1000).toFixed(3) + ' kΩ' : R_TH.toFixed(1) + ' Ω';
+            calcR12.textContent = R12_parallel >= 1000 ? (R12_parallel/1000).toFixed(3) + ' kΩ' : R12_parallel.toFixed(1) + ' Ω';
+            calcIsc.textContent = (I_sc * 1000).toFixed(2) + ' mA';
+
+            // Update SVGs
+            svgOrigVs.textContent = Vs.toFixed(1) + ' V';
+            svgThVth.textContent = V_TH.toFixed(2) + ' V';
+
+            // Update Telemetry Cards
+            cardVl.textContent = V_L_th.toFixed(2) + ' V';
+            cardOrigVl.textContent = V_L_orig.toFixed(2) + ' V';
+            cardThVl.textContent = V_L_th.toFixed(2) + ' V';
+
+            cardIl.textContent = (I_L_th * 1000).toFixed(2) + ' mA';
+            cardOrigIl.textContent = (I_L_orig * 1000).toFixed(2) + ' mA';
+            cardThIl.textContent = (I_L_th * 1000).toFixed(2) + ' mA';
+
+            cardPl.textContent = P_L_th.toFixed(1) + ' mW';
+            cardOrigPl.textContent = P_L_orig.toFixed(1) + ' mW';
+            cardThPl.textContent = P_L_th.toFixed(1) + ' mW';
+        }
+
+        // Event Listeners
+        [vsSlider, r1Slider, r2Slider, r3Slider, rlSlider].forEach(slider => {
+            slider.addEventListener('input', updateThevenin);
+        });
+
+        rlConnected.addEventListener('change', updateThevenin);
+
+        btnPresetEjercicio.addEventListener('click', () => {
+            vsSlider.value = 20;
+            r1Slider.value = 1000;
+            r2Slider.value = 2200;
+            r3Slider.value = 470;
+            rlSlider.value = 1000;
+            rlConnected.checked = true;
+            updateThevenin();
+        });
+
+        // Initialize
+        updateThevenin();
+    </script>
+</body>
+</html>
+
